@@ -2,75 +2,96 @@ from game_functions import *
 from constants import *
 
 
+FPS = 60
+
+
 class AnimatedPlayer(pygame.sprite.Sprite):
     # Передаём спрайт-лист с анимацией игрока, количество рядов и колонок на спрайт-листе
     # И отступ от края холста
-    def __init__(self, stay_frames, walk_frames):
+    def __init__(self, stay_frames, walk_frames, pos):
         super().__init__(player_group)
-        self.jump = False  # Флаг прыжка
-        # self.direction = 0  # Направление игрока 0 - вправо, 1 - влево
+        self.is_jump = False  # Флаг прыжка
+        self.occupation = 0  # Переменная - отвечает за действия игрока
+        # 0 - бездействие, 1 - ходьба вправо,
+        # 2 - ходьба влево, 3 - прыжок.
+        self.jump_power = 10  # Сила прыжка в определенный момент времени
         self.stay_frames = stay_frames  # Список, с анимацией бездействия игрока
         self.walk_frames = walk_frames  # Список, с анимацией ходьбы игрока
         self.current_frame = 0  # Текущий кадр - нулевой
         self.image = self.stay_frames[self.current_frame]
+        self.width = self.image.get_width() // 4
+        self.height = self.image.get_height()
         self.rect = self.image.get_rect()
-        self.rect = self.rect.move(0, 0)
+        x, y = pos
+        self.default_x, self.default_y = x, y
+        self.rect = self.rect.move(x, y)
+
+    # Прыжок игрока
+    def jump(self):
+        if self.jump_power >= -10:  # Проверка на то, не вернулся ли в изначальное положение игрок
+            if self.jump_power < 0:  # Проверка на то, достиг ли игрок точки невесомости
+                if not pygame.sprite.spritecollideany(self, objects_group):
+                    self.rect.y += (self.jump_power ** 2) // 2  # Опускаем игрока
+            else:
+                if not pygame.sprite.spritecollideany(self, objects_group):
+                    self.rect.y -= (self.jump_power ** 2) // 2  # Поднимаем игрока
+            self.jump_power -= 1  # Стадия прыжка уменьшается
+        else:
+            self.is_jump = False
+            self.jump_power = 10
 
     # Передвижение игрока в правую сторону
     def walk_right(self):
-        self.rect = self.rect.move(0.5, 0)
-        self.current_frame += 1
-        if self.current_frame < len(self.walk_frames):
-            pass
-        else:
-            self.current_frame = 0
-        self.image = self.walk_frames[self.current_frame]
+        if self.rect.x + STEP < WIDTH - self.width * 2:
+            self.rect = self.rect.move(STEP, 0)
+        self.calculate_frame(1)
+        self.image = self.walk_frames[self.current_frame // ANIMATION_FPS]
 
     # Передвижение игрока в левую сторону
     def walk_left(self):
-        self.rect = self.rect.move(-0.5, 0)
+        if self.rect.x - STEP > 0:
+            self.rect = self.rect.move(-STEP, 0)
+        self.calculate_frame(1)
+        self.image = self.walk_frames[self.current_frame // ANIMATION_FPS]
+        self.flip()
+
+    # Вычисление текущего кадра (передаётся действие игрока 0 - бездействие, 1 - ходьба)
+    def calculate_frame(self, action):
+        frames = self.walk_frames if action == 1 else self.stay_frames
         self.current_frame += 1
-        if self.current_frame < len(self.walk_frames):
+        if self.current_frame < len(frames) * ANIMATION_FPS:
             pass
         else:
             self.current_frame = 0
-        self.image = self.walk_frames[self.current_frame]
-        self.flip()
 
     # Игрок бездействует
     def idle(self):
-        self.current_frame += 1
-        if self.current_frame < len(self.stay_frames):
-            pass
-        else:
-            self.current_frame = 0
-        self.image = self.stay_frames[self.current_frame]
-
-    # Игрок прыгает
-    def jumping(self):
-        self.jump = True
-
-    # Функция, обновляющая игрока (реализация анимации)
-    def update(self, *args):
-        if args and args[0].type == pygame.KEYDOWN:
-            if not self.jump:
-                if args[0].key == pygame.K_UP:
-                    self.jumping()
-                if args[0].key == pygame.K_LEFT:
-                    self.walk_left()
-                if args[0].key == pygame.K_RIGHT:
-                    self.walk_right()
+        self.calculate_frame(0)
+        self.image = self.stay_frames[self.current_frame // ANIMATION_FPS]
 
     # Функция, зеркально отражающая изображение игрока
     def flip(self):
         self.image = pygame.transform.flip(self.image, True, False)
 
+    # Функция, обновляющая игрока (реализация анимации)
+    def update(self, *args):
+        keys = pygame.key.get_pressed()
+        if args and keys:
+            if keys[pygame.K_SPACE]:
+                self.is_jump = True
+            elif keys[pygame.K_LEFT]:
+                self.occupation = 2
+            elif keys[pygame.K_RIGHT]:
+                self.occupation = 1
+            else:
+                self.occupation = 0
 
+
+# Класс, описывающий платформу
 class Platform(pygame.sprite.Sprite):
-    def __init__(self, w, h, x, y):
+    def __init__(self, image, x, y):
         super().__init__(objects_group)
-        self.image = pygame.Surface((w, h))
-        self.image.fill(WHITE)
+        self.image = image
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -80,38 +101,36 @@ class Platform(pygame.sprite.Sprite):
 def game(hero):
     if hero == "lynx":
         player = AnimatedPlayer(
-            [load_image(os.path.join("images", "lynx_stay.png")), 5, 2, 0, 0],
-            [load_image(os.path.join("images", "walking_lynx.png")), 2, 1, 0, 0])
+            cut_sheet(load_image(os.path.join("images", "lynx_stay.png")), 5, 2),
+            cut_sheet(load_image(os.path.join("images", "walking_lynx.png")), 2, 1), (0, 400))
     else:
         player = AnimatedPlayer(
-            [load_image(os.path.join("images", "wolf_stay.png")), 5, 2, 0, 0],
-            [load_image(os.path.join("images", "walking_wolf.png")), 2, 1, 0, 0])
+            cut_sheet(load_image(os.path.join("images", "wolf_stay.png")), 5, 2),
+            cut_sheet(load_image(os.path.join("images", "walking_wolf.png")), 2, 1), (0, 400))
+    # mini_platform = Platform(pygame.transform.scale(load_image("images/mini.png"), (200, 50)), 500, 400)
     animation = None
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-        screen.fill(pygame.Color("black"))
-        player_group.draw(screen)
+            player_group.update(event)
+        screen.fill(pygame.Color("cyan"))
+        screen.blit(load_image("images/testPlatform.png"), (0, 600))
         objects_group.draw(screen)
-        player_group.update()
+        player_group.draw(screen)
+        if player.occupation == 0:
+            if not player.is_jump:
+                player.idle()
+        if player.occupation == 1:
+            player.walk_right()
+        if player.occupation == 2:
+            player.walk_left()
+        if player.is_jump:
+            player.jump()
         pygame.display.flip()
         clock.tick(FPS)
 
 
-# Функция, вырезающая кадры со спрайт-листа
-def cut_sheet(sheet, columns, rows):
-    frames = []
-    rect = pygame.Rect(0, 0, sheet.get_width() // columns,
-                       sheet.get_height() // rows)
-    for j in range(rows):
-        for i in range(columns):
-            frame_location = (rect.w * i, rect.h * j)
-            frames.append(sheet.subsurface(pygame.Rect(
-                frame_location, rect.size)))
-    return frames
-
-
 player_group = pygame.sprite.Group()
 objects_group = pygame.sprite.Group()
-game("lynx")
+game("wolf")

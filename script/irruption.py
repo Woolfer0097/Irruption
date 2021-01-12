@@ -11,7 +11,6 @@ def play_scene(filename):
 
 def main():
     pygame.init()
-    pygame.display.set_caption("Irruption")
     os.environ['SDL_VIDEO_CENTERED'] = '1'
     play_scene("../data/katstsena1.mp4")
     start_screen()

@@ -23,11 +23,20 @@ def load_image(name, colorkey=None):
     return image
 
 
-def get_size_of_desktop():
-    desktop = Qt.QApplication(sys.argv).desktop()
-    return desktop.width(), desktop.height()
+# Функция, вырезающая кадры со спрайт-листа
+def cut_sheet(sheet, columns, rows):
+    frames = []
+    rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                       sheet.get_height() // rows)
+    for j in range(rows):
+        for i in range(columns):
+            frame_location = (rect.w * i, rect.h * j)
+            frames.append(pygame.transform.scale(sheet.subsurface(pygame.Rect(
+                frame_location, rect.size)), (256, 256)))
+    return frames
 
 
+# Функция запуска начального экрана
 def start_screen():
     bg = load_image("images/start_screen.png")
     screen.blit(bg, (0, 0))
