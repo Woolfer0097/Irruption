@@ -14,16 +14,16 @@ class AnimatedPlayer(pygame.sprite.Sprite):
         self.occupation = 0  # Переменная - отвечает за действия игрока
         # 0 - бездействие, 1 - ходьба вправо,
         # 2 - ходьба влево, 3 - прыжок.
-        self.jump_power = 10  # Сила прыжка в определенный момент времени
+        self.jump_power = JUMP_STRENGTH  # Сила прыжка в определенный момент времени
         self.stay_frames = stay_frames  # Список, с анимацией бездействия игрока
         self.walk_frames = walk_frames  # Список, с анимацией ходьбы игрока
         self.current_frame = 0  # Текущий кадр - нулевой
         self.image = self.stay_frames[self.current_frame]
-        self.width = self.image.get_width() // 4
-        self.height = self.image.get_height()
+        self.width = self.image.get_width() // 4  # Ширина игрока
+        self.height = self.image.get_height()  # Высота игрока
         self.rect = self.image.get_rect()
         x, y = pos
-        self.default_x, self.default_y = x, y
+        self.default_x, self.default_y = x, y  # Начальные координаты игрока
         self.rect = self.rect.move(x, y)
 
     # Прыжок игрока
@@ -35,10 +35,10 @@ class AnimatedPlayer(pygame.sprite.Sprite):
             else:
                 if not pygame.sprite.spritecollideany(self, objects_group):
                     self.rect.y -= (self.jump_power ** 2) // 2  # Поднимаем игрока
-            self.jump_power -= 1  # Стадия прыжка уменьшается
+            self.jump_power -= GRAVITY  # Стадия прыжка уменьшается
         else:
             self.is_jump = False
-            self.jump_power = 10
+            self.jump_power = JUMP_STRENGTH
 
     # Передвижение игрока в правую сторону
     def walk_right(self):

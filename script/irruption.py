@@ -11,11 +11,12 @@ def play_scene(filename):
 
 def main():
     pygame.init()
+    start_screen()
     os.environ['SDL_VIDEO_CENTERED'] = '1'
     play_scene("../data/katstsena1.mp4")
-    start_screen()
     choose_hero()
     print("Игра")
 
 
-main()
+if __name__ == '__main__':
+    main()
