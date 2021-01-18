@@ -38,15 +38,21 @@ def cut_sheet(sheet, columns, rows):
 
 # Функция запуска начального экрана
 def start_screen():
-    bg = load_image("images/start_screen.png")
-    screen.blit(bg, (0, 0))
+    bg = load_image("images/main_menu.png")
+    start_btn = Button(300, 100, 100, 100)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
-                return
+            elif event.type == pygame.MOUSEMOTION:
+                if start_btn.on_hovered(event.pos):
+                    print("Наведено")
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if start_btn.on_hovered(event.pos):
+                    return
+        screen.blit(bg, (0, 0))
+        all_sprites.draw(screen)
+        all_sprites.update()
         pygame.display.flip()
         clock.tick(FPS)
 

@@ -99,6 +99,7 @@ class Platform(pygame.sprite.Sprite):
 
 # Функция запуска мини-игры
 def game(hero):
+    screen = pygame.display.set_mode(SIZE)
     if hero == "lynx":
         player = AnimatedPlayer(
             cut_sheet(load_image(os.path.join("images", "lynx_stay.png")), 5, 2),
@@ -133,4 +134,3 @@ def game(hero):
 
 player_group = pygame.sprite.Group()
 objects_group = pygame.sprite.Group()
-game("wolf")

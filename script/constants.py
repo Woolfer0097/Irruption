@@ -1,4 +1,5 @@
 import pygame
+import pygame_gui
 import os
 import sys
 import time
@@ -13,6 +14,7 @@ WHITE = pygame.Color("white")
 BLACK = pygame.Color("black")
 GRAVITY = 1
 all_sprites = pygame.sprite.Group()
-clock = pygame.time.Clock()
+manager = pygame_gui.UIManager(SIZE)
 screen = pygame.display.set_mode(SIZE)
+clock = pygame.time.Clock()
 pygame.display.set_caption("Irruption")

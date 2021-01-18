@@ -25,3 +25,8 @@ class Button(pygame.sprite.Sprite):
     # Функция возвращает цвет кнопки в изначальный (после наведения)
     def set_default_color(self):
         self.image.fill(self.standard_color)
+
+    def on_hovered(self, pos):
+        if self.rect.collidepoint(*pos):
+            return True
+        return False
