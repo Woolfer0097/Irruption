@@ -13,8 +13,9 @@ FPS = 30
 WHITE = pygame.Color("white")
 BLACK = pygame.Color("black")
 GRAVITY = 1
+SCALE_COEFF = 1.2
 all_sprites = pygame.sprite.Group()
-manager = pygame_gui.UIManager(SIZE)
+buttons = pygame.sprite.Group()
 screen = pygame.display.set_mode(SIZE)
 clock = pygame.time.Clock()
 pygame.display.set_caption("Irruption")

@@ -2,13 +2,15 @@ from constants import *
 from choose_hero import Button
 
 
+# Функция выключения
 def terminate():
     pygame.quit()
     sys.exit()
 
 
+# Функция загрузки изображения
 def load_image(name, colorkey=None):
-    fullname = os.path.join('../data', name)
+    fullname = os.path.join('../data/images', name)
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
         sys.exit()
@@ -36,23 +38,36 @@ def cut_sheet(sheet, columns, rows):
     return frames
 
 
+# Затухание экрана
+def fading(delay):
+    for opacity in range(255, 0, -15):
+        print(opacity)
+        working_surface = pygame.Surface((1024, 768), pygame.SRCALPHA, 32)
+        working_surface.fill((0, 0, 0, opacity))
+        screen.blit(working_surface, (0, 0))
+        pygame.display.flip()
+        pygame.time.delay(delay)
+
+
 # Функция запуска начального экрана
 def start_screen():
-    bg = load_image("images/main_menu.png")
-    start_btn = Button(300, 100, 100, 100)
+    bg = load_image("main_menu.png")
+    start_btn = Button(load_image("start_btn.png"), 381, 326)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.MOUSEMOTION:
+            if event.type == pygame.MOUSEMOTION:
                 if start_btn.on_hovered(event.pos):
-                    print("Наведено")
-            elif event.type == pygame.MOUSEBUTTONUP:
+                    start_btn.highlight()
+                else:
+                    start_btn.set_default_image()
+            if event.type == pygame.MOUSEBUTTONUP:
                 if start_btn.on_hovered(event.pos):
                     return
         screen.blit(bg, (0, 0))
-        all_sprites.draw(screen)
-        all_sprites.update()
+        buttons.draw(screen)
+        buttons.update()
         pygame.display.flip()
         clock.tick(FPS)
 
