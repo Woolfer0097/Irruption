@@ -102,12 +102,12 @@ def game(hero):
     screen = pygame.display.set_mode(SIZE)
     if hero == "lynx":
         player = AnimatedPlayer(
-            cut_sheet(load_image(os.path.join("images", "lynx_stay.png")), 5, 2),
-            cut_sheet(load_image(os.path.join("images", "walking_lynx.png")), 2, 1), (0, 400))
+            cut_sheet(load_image("lynx_stay.png"), 5, 2, 256, 256),
+            cut_sheet(load_image("walking_lynx.png"), 2, 1, 256, 256), (0, 400))
     else:
         player = AnimatedPlayer(
-            cut_sheet(load_image(os.path.join("images", "wolf_stay.png")), 5, 2),
-            cut_sheet(load_image(os.path.join("images", "walking_wolf.png")), 2, 1), (0, 400))
+            cut_sheet(load_image("wolf_stay.png"), 5, 2, 256, 256),
+            cut_sheet(load_image("walking_wolf.png"), 2, 1, 256, 256), (0, 400))
     # mini_platform = Platform(pygame.transform.scale(load_image("images/mini.png"), (200, 50)), 500, 400)
     animation = None
     while True:
@@ -116,7 +116,7 @@ def game(hero):
                 terminate()
             player_group.update(event)
         screen.fill(pygame.Color("cyan"))
-        screen.blit(load_image("images/testPlatform.png"), (0, 600))
+        screen.blit(load_image("testPlatform.png"), (0, 600))
         objects_group.draw(screen)
         player_group.draw(screen)
         if player.occupation == 0:

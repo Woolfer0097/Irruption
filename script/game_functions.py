@@ -1,5 +1,5 @@
 from constants import *
-from choose_hero import Button
+from button import Button
 
 
 # Функция выключения
@@ -26,7 +26,7 @@ def load_image(name, colorkey=None):
 
 
 # Функция, вырезающая кадры со спрайт-листа
-def cut_sheet(sheet, columns, rows):
+def cut_sheet(sheet, columns, rows, obj_width, obj_height):
     frames = []
     rect = pygame.Rect(0, 0, sheet.get_width() // columns,
                        sheet.get_height() // rows)
@@ -34,8 +34,17 @@ def cut_sheet(sheet, columns, rows):
         for i in range(columns):
             frame_location = (rect.w * i, rect.h * j)
             frames.append(pygame.transform.scale(sheet.subsurface(pygame.Rect(
-                frame_location, rect.size)), (256, 256)))
+                frame_location, rect.size)), (obj_width, obj_height)))
     return frames
+
+
+def calculate_frame(current_frame, frames):
+    current_frame += 1
+    if current_frame < len(frames) * ANIMATION_FPS:
+        pass
+    else:
+        current_frame = 0
+    return current_frame
 
 
 # Затухание экрана
@@ -51,21 +60,25 @@ def fading(delay):
 
 # Функция запуска начального экрана
 def start_screen():
-    bg = load_image("main_menu.png")
-    start_btn = Button(load_image("start_btn.png"), 381, 326)
+    current_frame = 0
+    bg_frames = cut_sheet(load_image("start_screen.png"), 2, 1, 1024, 683)
+    button_frames = cut_sheet(load_image("buttons.png"), 1, 7, 256, 64)
+    start_btn = Button(button_frames, 381, 320, "Играть")
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            if event.type == pygame.MOUSEMOTION:
-                if start_btn.on_hovered(event.pos):
-                    start_btn.highlight()
-                else:
-                    start_btn.set_default_image()
             if event.type == pygame.MOUSEBUTTONUP:
                 if start_btn.on_hovered(event.pos):
                     return
-        screen.blit(bg, (0, 0))
+        mouse_pos = pygame.mouse.get_pos()
+        for btn in buttons:
+            if btn.on_hovered(mouse_pos):
+                btn.highlight()
+            else:
+                btn.set_default_image()
+        screen.blit(bg_frames[current_frame // ANIMATION_FPS], (0, 0))
+        current_frame = calculate_frame(current_frame, bg_frames)
         buttons.draw(screen)
         buttons.update()
         pygame.display.flip()
@@ -76,8 +89,6 @@ def start_screen():
 def choose_hero():
     all_sprites.empty()
     screen.fill(pygame.Color("black"))
-    button_wolf = Button(50, 250, 200, 50)
-    button_lynx = Button(700, 250, 200, 50)
     running = True
     while running:
         for event in pygame.event.get():

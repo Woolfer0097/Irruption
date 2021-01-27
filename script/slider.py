@@ -1,9 +1,28 @@
-from game_functions import *
+import pygame as pg
 
-screen = pygame.display.set_mode((1024, 768))
-img = load_image("images/main_menu.png")
 
-for opacity in range(255, 0, -15):
-     pygame.draw.rect(screen, (0, 0, 0, opacity),  (0, 0, 1024, 768))
-     pygame.display.flip()
-     pygame.time.delay(100)
+def display_text(text, color, x, y, font):
+    text_image = font.render(text, False, color)
+    text_rect = text_image.get_rect(center=(x, y))
+    screen.blit(text_image, text_rect)
+
+
+pg.init()
+screen = pg.display.set_mode((640, 480))
+screen_rect = screen.get_rect()
+clock = pg.time.Clock()
+font = pg.font.Font(None, 52)
+done = False
+
+while not done:
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            done = True
+
+    screen.fill((30, 30, 30))
+    display_text(
+        'Lorem ipsum dolor sit amet', (0, 100, 200),
+        screen_rect.centerx, 100, font)
+
+    pg.display.flip()
+    clock.tick(30)
