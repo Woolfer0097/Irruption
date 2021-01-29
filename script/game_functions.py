@@ -47,30 +47,57 @@ def calculate_frame(current_frame, frames):
     return current_frame
 
 
-# Затухание экрана
-def fading(delay):
-    for opacity in range(255, 0, -15):
-        print(opacity)
-        working_surface = pygame.Surface((1024, 768), pygame.SRCALPHA, 32)
-        working_surface.fill((0, 0, 0, opacity))
-        screen.blit(working_surface, (0, 0))
-        pygame.display.flip()
-        pygame.time.delay(delay)
+# Затухание экрана (Передаётся задержка и тип перехода)
+# def transition(delay, trans_type):
+#     # types = {0: "introduction", 1: "fading"}
+#     # saved_screen = screen
+#     # if trans_type == 0:
+#     #     for size in range(50, 0, -1):
+#     #         black_rect = pygame.Surface((1024, 683))  # переход снизу - вверх
+#     #         black_rect.fill(BLACK)
+#     #         screen.blit(black_rect, (0, size * 30))
+#     #         pygame.display.flip()
+#     #         pygame.time.delay(delay)
+#     else:
+#         for size in range(40):
+#             black_rect = pygame.Surface((1024, 20 * size))  # - переход сверху - вниз
+#             black_rect.fill(BLACK)
+#             screen.blit(black_rect, (screen.get_rect(center=screen.get_rect().center)))
+#             pygame.display.flip()
+#             pygame.time.delay(delay)
 
 
 # Функция запуска начального экрана
 def start_screen():
     current_frame = 0
+    i_s = cut_sheet(load_image("icons.png"), 4, 2, 74, 71)  # icon_sheet
+    # (i_s - сокращено для удобной записи в словаре)
+    icons = {"settings": i_s[0], "pause": i_s[1], "reset": i_s[2], "star": i_s[3],
+             "hp": i_s[4], "cup": i_s[5], "volume_down": i_s[6], "volume up": i_s[7]}
     bg_frames = cut_sheet(load_image("start_screen.png"), 2, 1, 1024, 683)
-    button_frames = cut_sheet(load_image("buttons.png"), 1, 7, 256, 64)
-    start_btn = Button(button_frames, 381, 320, "Играть")
+    long_button_frames = cut_sheet(load_image("buttons.png"), 1, 7, 256, 64)
+    short_button_frames = cut_sheet(load_image("short_btn.png"), 3, 1, 96, 78)
+    start_btn = Button(long_button_frames, 384, 310, "Играть")
+    info_btn = Button(long_button_frames, 384, 406, "Об авторах")
+    exit_btn = Button(long_button_frames, 384, 502, "Выход")
+    settings_btn = Button(short_button_frames, 910, 584, "", icons["settings"])
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.MOUSEBUTTONUP:
                 if start_btn.on_hovered(event.pos):
-                    return
+                    # transition(10, 1)
+                    return 0
+                if info_btn.on_hovered(event.pos):
+                    # transition(10, 1)
+                    return 1
+                if exit_btn.on_hovered(event.pos):
+                    # transition(10, 1)
+                    terminate()
+                if settings_btn.on_hovered(event.pos):
+                    # transition(10, 0)
+                    pass
         mouse_pos = pygame.mouse.get_pos()
         for btn in buttons:
             if btn.on_hovered(mouse_pos):
@@ -107,4 +134,3 @@ def choose_hero():
         all_sprites.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
-
