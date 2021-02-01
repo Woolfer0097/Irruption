@@ -47,24 +47,14 @@ def calculate_frame(current_frame, frames):
     return current_frame
 
 
-# Затухание экрана (Передаётся задержка и тип перехода)
-# def transition(delay, trans_type):
-#     # types = {0: "introduction", 1: "fading"}
-#     # saved_screen = screen
-#     # if trans_type == 0:
-#     #     for size in range(50, 0, -1):
-#     #         black_rect = pygame.Surface((1024, 683))  # переход снизу - вверх
-#     #         black_rect.fill(BLACK)
-#     #         screen.blit(black_rect, (0, size * 30))
-#     #         pygame.display.flip()
-#     #         pygame.time.delay(delay)
-#     else:
-#         for size in range(40):
-#             black_rect = pygame.Surface((1024, 20 * size))  # - переход сверху - вниз
-#             black_rect.fill(BLACK)
-#             screen.blit(black_rect, (screen.get_rect(center=screen.get_rect().center)))
-#             pygame.display.flip()
-#             pygame.time.delay(delay)
+# Затухание экрана (Передаётся задержка)
+def transition(delay):
+    for size in range(40):
+        black_rect = pygame.Surface((1024, 20 * size))  # - переход сверху - вниз
+        black_rect.fill(BLACK)
+        screen.blit(black_rect, (black_rect.get_rect(center=screen.get_rect().center)))
+        pygame.display.flip()
+        pygame.time.delay(delay)
 
 
 # Функция запуска начального экрана
@@ -87,17 +77,16 @@ def start_screen():
                 terminate()
             if event.type == pygame.MOUSEBUTTONUP:
                 if start_btn.on_hovered(event.pos):
-                    # transition(10, 1)
+                    transition(15)
                     return 0
                 if info_btn.on_hovered(event.pos):
-                    # transition(10, 1)
+                    transition(15)
                     return 1
                 if exit_btn.on_hovered(event.pos):
-                    # transition(10, 1)
+                    transition(15)
                     terminate()
                 if settings_btn.on_hovered(event.pos):
-                    # transition(10, 0)
-                    pass
+                    transition(15)
         mouse_pos = pygame.mouse.get_pos()
         for btn in buttons:
             if btn.on_hovered(mouse_pos):

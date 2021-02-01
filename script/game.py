@@ -5,7 +5,7 @@ from constants import *
 FPS = 60
 
 
-class AnimatedPlayer(pygame.sprite.Sprite):
+class Player(pygame.sprite.Sprite):
     # Передаём спрайт-лист с анимацией игрока, количество рядов и колонок на спрайт-листе
     # И отступ от края холста
     def __init__(self, stay_frames, walk_frames, pos):
@@ -25,6 +25,7 @@ class AnimatedPlayer(pygame.sprite.Sprite):
         x, y = pos
         self.default_x, self.default_y = x, y  # Начальные координаты игрока
         self.rect = self.rect.move(x, y)
+        self.pos = pos
 
     # Прыжок игрока
     def jump(self):
@@ -46,6 +47,7 @@ class AnimatedPlayer(pygame.sprite.Sprite):
             self.rect = self.rect.move(STEP, 0)
         self.calculate_frame(1)
         self.image = self.walk_frames[self.current_frame // ANIMATION_FPS]
+        # self.camera_apply()
 
     # Передвижение игрока в левую сторону
     def walk_left(self):
@@ -54,6 +56,13 @@ class AnimatedPlayer(pygame.sprite.Sprite):
         self.calculate_frame(1)
         self.image = self.walk_frames[self.current_frame // ANIMATION_FPS]
         self.flip()
+        # self.camera_apply()
+
+    # Перемещает камеру
+    def camera_apply(self):
+        self.pos = (self.rect.x, self.rect.y)
+        for sprite in objects_group:
+            camera.apply(sprite)
 
     # Вычисление текущего кадра (передаётся действие игрока 0 - бездействие, 1 - ходьба)
     def calculate_frame(self, action):
@@ -75,6 +84,7 @@ class AnimatedPlayer(pygame.sprite.Sprite):
 
     # Функция, обновляющая игрока (реализация анимации)
     def update(self, *args):
+        self.camera_apply()
         keys = pygame.key.get_pressed()
         if args and keys:
             if keys[pygame.K_SPACE]:
@@ -89,36 +99,73 @@ class AnimatedPlayer(pygame.sprite.Sprite):
 
 # Класс, описывающий платформу
 class Platform(pygame.sprite.Sprite):
-    def __init__(self, image, x, y):
+    def __init__(self, image, pos_x, pos_y, tile_size):
         super().__init__(objects_group)
         self.image = image
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.rect = self.image.get_rect().move(
+            pos_x * tile_size, pos_y * tile_size)
+        self.abs_pos = (self.rect.x, self.rect.y)
+
+
+# Класс, описывающий генерацию уровня
+class Level:
+    def __init__(self, filename):
+        self.map = pytmx.load_pygame(os.path.join('../data/maps', filename))
+        self.height, self.width = self.map.height, self.map.width
+        self.tile_size = self.map.tilewidth
+
+    def render(self, screen):
+        for y in range(self.height):
+            for x in range(self.width):
+                image = image = self.map.get_tile_image(x, y, 0)
+                if image:
+                    platform = Platform(image, x, y, self.tile_size)
+                    screen.blit(image, (x * self.tile_size, y * self.tile_size))
+
+    def get_tile_id(self, position):
+        return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]
+
+
+# Класс, описывающий камеру
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x = obj.abs_pos[0] + self.dx
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = 0
 
 
 # Функция запуска мини-игры
 def game(hero):
-    screen = pygame.display.set_mode(SIZE)
+    stay_parameters = [5, 2, 256, 256]  # Параметры для создания спрайт-листа бездействия игрока
+    walk_parameters = [2, 1, 256, 256]  # Параметры для создания спрайт-листа ходьбы игрока
+    # Установка игрока
     if hero == "lynx":
-        player = AnimatedPlayer(
-            cut_sheet(load_image("lynx_stay.png"), 5, 2, 256, 256),
-            cut_sheet(load_image("walking_lynx.png"), 2, 1, 256, 256), (0, 400))
+        player = Player(
+            cut_sheet(load_image("lynx_stay.png"), *stay_parameters),
+            cut_sheet(load_image("walking_lynx.png"), *walk_parameters), (0, 1))
     else:
-        player = AnimatedPlayer(
-            cut_sheet(load_image("wolf_stay.png"), 5, 2, 256, 256),
-            cut_sheet(load_image("walking_wolf.png"), 2, 1, 256, 256), (0, 400))
-    # mini_platform = Platform(pygame.transform.scale(load_image("images/mini.png"), (200, 50)), 500, 400)
-    animation = None
+        player = Player(
+            cut_sheet(load_image("wolf_stay.png"), *stay_parameters),
+            cut_sheet(load_image("walking_wolf.png"), *walk_parameters), (30, 365))
+    level = Level("тест.tmx")  # создаём объект уровня
+    camera.update(player)  # привязываем игрока к камере (позиционировать камеру на игрока)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             player_group.update(event)
-        screen.fill(pygame.Color("cyan"))
-        screen.blit(load_image("testPlatform.png"), (0, 600))
-        objects_group.draw(screen)
-        player_group.draw(screen)
+        screen.fill(WHITE)  # Отрисовываем фон каждый цикл
+        objects_group.empty()
+        objects_group.draw(screen)  # Отрисовываем все объекты
+        player_group.draw(screen)  # Отрисовываем игрока
+        level.render(screen)
         if player.occupation == 0:
             if not player.is_jump:
                 player.idle()
@@ -132,5 +179,8 @@ def game(hero):
         clock.tick(FPS)
 
 
+screen = pygame.display.set_mode(SIZE)
 player_group = pygame.sprite.Group()
 objects_group = pygame.sprite.Group()
+camera = Camera()  # создаём объект камеры
+game("wolf")
