@@ -1,7 +1,6 @@
 from moviepy.editor import *
 from game_functions import *
 from game import *
-from constants import *
 
 
 def play_scene(filename):

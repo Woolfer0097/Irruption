@@ -1,9 +1,11 @@
-import pygame
-import pytmx
-import pygame_gui
-import os
-import sys
-import time
+# Библиотеки и константы для игры
+
+
+import pygame  # Основная библиотека (Движок игры)
+import sqlite3  # Библиотека для работы с БД
+import pytmx  # Библиотека загрузки карт для уровней
+import os  # Библиотека для работы с операционной системой
+import sys  # Библиотека для работы с файлами
 
 WIDTH, HEIGHT = SIZE = 1024, 683
 STEP = 10
