@@ -12,6 +12,7 @@ class Player(pygame.sprite.Sprite):
         self.occupation = 0  # Переменная - отвечает за действия игрока
         # 0 - бездействие, 1 - ходьба вправо,
         # 2 - ходьба влево, 3 - прыжок.
+        self.deaths = 0
         self.jump_power = JUMP_STRENGTH  # Сила прыжка в определенный момент времени
         self.stay_frames = stay_frames  # Список, с анимацией бездействия игрока
         self.walk_frames = walk_frames  # Список, с анимацией ходьбы игрока
@@ -27,16 +28,16 @@ class Player(pygame.sprite.Sprite):
 
     # Прыжок игрока
     def jump(self):
-        if self.jump_power > 0:  # Проверка на то, достиг ли игрок точки невесомости
-            self.rect.y -= (self.jump_power ** 2) // 2  # Поднимаем игрока
-            self.jump_power -= GRAVITY  # Стадия прыжка уменьшается
-        else:
-            if not pygame.sprite.spritecollideany(self, objects_group):  # Проверка на столкновение с платформами
-                self.rect.y += 5  # Опускаем игрока
+        if self.is_jump:  # Проверка на то, не вернулся ли в изначальное положение игрок
+            if self.jump_power > 2:
+                self.rect.y -= (self.jump_power ** 2) / 2  # Поднимаем игрока
             else:
-                self.is_jump = False  # Делаем флаг прыжка False
-                self.jump_power = JUMP_STRENGTH  # Обновляем силу прыжка на значение по-умолчанию
-                return
+                if pygame.sprite.spritecollideany(self, objects_group):
+                    self.is_jump = False
+                    self.jump_power = JUMP_STRENGTH
+                else:
+                    self.rect.y += (self.jump_power ** 2) // 2
+            self.jump_power -= GRAVITY  # Стадия прыжка уменьшается
 
     # Передвижение игрока в правую сторону
     def walk_right(self):
@@ -44,7 +45,7 @@ class Player(pygame.sprite.Sprite):
             self.rect = self.rect.move(STEP, 0)  # Передвигаем игрока вправо на "шаг"
         self.calculate_frame(1)  # Вычисляем кадр анимации
         self.image = self.walk_frames[self.current_frame // ANIMATION_FPS]
-        self.camera_apply()  # Применяем камеру ко всем объектам,
+        # self.camera_apply()  # Применяем камеру ко всем объектам,
         # чтобы они сместились на расстояние, которое прошёл игрок
 
     # Передвижение игрока в левую сторону
@@ -54,7 +55,7 @@ class Player(pygame.sprite.Sprite):
         self.calculate_frame(1)  # Вычисляем кадр анимации
         self.image = self.walk_frames[self.current_frame // ANIMATION_FPS]
         self.flip()  # Переворачиваем изображение игрока, т.к. движется влево
-        self.camera_apply()  # Применяем камеру ко всем объектам,
+        # self.camera_apply()  # Применяем камеру ко всем объектам,
         # чтобы они сместились на расстояние, которое прошёл игрок
 
     # Перемещает камеру
@@ -87,20 +88,22 @@ class Player(pygame.sprite.Sprite):
 
     # Функция, обновляющая игрока (реализация анимации)
     def update(self, *args):
+        if self.rect.y == 0:
+            self.deaths += 1
+            return
         # Проверка на соприкосновение игрока и объектов (Если коллизий нет, то опускаем игрока)
         if not pygame.sprite.spritecollideany(self, objects_group) and not self.is_jump:
-            self.rect.y += 5
+            self.rect.y += (self.jump_power ** 2) // 2  # Опускаем игрока
         # Проверка на нажатие клавиш
         keys = pygame.key.get_pressed()
-        if keys:
-            if keys[pygame.K_UP] and not self.is_jump:  # Прыжок
+        if args and keys:
+            if keys[pygame.K_SPACE] and not self.is_jump:
                 self.is_jump = True
-                self.occupation = 3
-            elif keys[pygame.K_LEFT]:   # Ходьба влево
+            elif keys[pygame.K_LEFT]:
                 self.occupation = 2
-            elif keys[pygame.K_RIGHT]:  # Ходьба вправо
+            elif keys[pygame.K_RIGHT]:
                 self.occupation = 1
-            else:                       # Бездействие
+            else:
                 self.occupation = 0
 
 
@@ -128,7 +131,6 @@ class Level:
                 image = self.map.get_tile_image(x, y, 0)  # Изображение тайла
                 if image:
                     platform = Platform(image, x, y, self.tile_size)  # Создаём объект платформы
-                    screen.blit(image, (x * self.tile_size, y * self.tile_size))  # Отрисовываем платформу
 
     def get_tile_id(self, position):  # Функция для получения ID тайла
         return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]
@@ -152,7 +154,7 @@ class Camera:
 
 
 # Функция запуска мини-игры
-def game(hero):
+def game(hero, lvl):
     stay_parameters = [5, 2, 256, 256]  # Параметры для создания спрайт-листа бездействия игрока
     walk_parameters = [2, 1, 256, 256]  # Параметры для создания спрайт-листа ходьбы игрока
     # Установка игрока
@@ -163,18 +165,22 @@ def game(hero):
     else:
         player = Player(
             cut_sheet(load_image("wolf_stay.png"), *stay_parameters),
-            cut_sheet(load_image("walking_wolf.png"), *walk_parameters), (30, 300))
-    level = Level("безымянный.tmx")  # создаём объект уровня
+            cut_sheet(load_image("walking_wolf.png"), *walk_parameters), (135, 100))
+    level = Level(LEVELS[lvl])  # создаём объект уровня
     level.render(screen)
     camera.update(player)  # привязываем игрока к камере (позиционировать камеру на игрока)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
+            player_group.update(event)
         screen.fill(WHITE)  # Отрисовываем фон каждый цикл
-        objects_group.draw(screen)  # Отрисовываем все объекты
+        screen.blit(load_image("background.png"), (0, 0))
+        for sprite in objects_group:
+            screen.blit(sprite.image, (sprite.rect.x, sprite.rect.y))
         player_group.draw(screen)  # Отрисовываем игрока
         player_group.update()  # Обновляем игрока каждый цикл
+        # death_count = player.deaths
         # Проверка на то, чем занят игрок
         if player.occupation == 0:
             player.idle()
@@ -182,7 +188,7 @@ def game(hero):
             player.walk_right()
         if player.occupation == 2:
             player.walk_left()
-        if player.occupation == 3:
+        if player.is_jump:
             player.jump()
         pygame.display.flip()
         clock.tick(FPS)
@@ -190,5 +196,12 @@ def game(hero):
 
 player_group = pygame.sprite.Group()
 objects_group = pygame.sprite.Group()
+death_count = 0
 camera = Camera()  # создаём объект камеры
-# game("wolf")
+start = time.monotonic()
+hero = "wolf"
+level_ = 1
+# game(hero, level_)
+# stop = time.monotonic()
+# time_delta = stop - start
+# update_db(name, hero, level_, time_delta, death_count)

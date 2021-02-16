@@ -14,7 +14,7 @@ def main():
     start_screen()
     os.environ['SDL_VIDEO_CENTERED'] = '1'
     play_scene("../data/katstsena1.mp4")
-    game("wolf")
+    game("wolf", 1)
 
 
 if __name__ == '__main__':

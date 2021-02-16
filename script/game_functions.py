@@ -48,7 +48,7 @@ def calculate_frame(current_frame, frames):
 
 
 # Затухание экрана (Передаётся задержка)
-def transition(delay):
+def transition(delay=15):
     for size in range(40):
         black_rect = pygame.Surface((1024, 20 * size))  # - переход сверху - вниз
         black_rect.fill(BLACK)
@@ -57,36 +57,55 @@ def transition(delay):
         pygame.time.delay(delay)
 
 
+def name_window():
+    pass
+
+
+def settings_window():
+    transition()
+
+
+def update_db(name, hero, level, time_delta, deaths):
+    connection = sqlite3.connect("data/databases/score.sqlite")
+    cursor = connection.cursor()
+    score = (time_delta // deaths) * 100  # Вычисляем текущий счёт игрока
+    sql_requests = [f"UPDATE PROGRESS SET {level} WHERE NAME = {name}",
+                    f"UPDATE SCORE SET {score} WHERE NAME = {name}"]
+    for sql_request in sql_requests:
+        cursor.execute(sql_request)
+
+
 # Функция запуска начального экрана
 def start_screen():
     current_frame = 0
-    i_s = cut_sheet(load_image("icons.png"), 4, 2, 74, 71)  # icon_sheet
+    i_s = cut_sheet(load_image("icons.png"), 5, 2, 74, 71)  # icon_sheet
     # (i_s - сокращено для удобной записи в словаре)
     icons = {"settings": i_s[0], "pause": i_s[1], "reset": i_s[2], "star": i_s[3],
-             "hp": i_s[4], "cup": i_s[5], "volume_down": i_s[6], "volume up": i_s[7]}
+             "cross": i_s[4], "hp": i_s[5], "cup": i_s[6], "volume_down": i_s[7],
+             "volume_up": i_s[8]}
     bg_frames = cut_sheet(load_image("start_screen.png"), 2, 1, 1024, 683)
     long_button_frames = cut_sheet(load_image("buttons.png"), 1, 7, 256, 64)
     short_button_frames = cut_sheet(load_image("short_btn.png"), 3, 1, 96, 78)
     start_btn = Button(long_button_frames, 384, 310, "Играть")
     info_btn = Button(long_button_frames, 384, 406, "Об авторах")
     exit_btn = Button(long_button_frames, 384, 502, "Выход")
-    settings_btn = Button(short_button_frames, 910, 584, "", icons["settings"])
+    settings_btn = Button(short_button_frames, 910, 584, "", icons["volume_up"])
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.MOUSEBUTTONUP:
                 if start_btn.on_hovered(event.pos):
-                    transition(15)
+                    transition()
                     return 0
                 if info_btn.on_hovered(event.pos):
-                    transition(15)
+                    transition()
                     return 1
                 if exit_btn.on_hovered(event.pos):
-                    transition(15)
+                    transition()
                     terminate()
                 if settings_btn.on_hovered(event.pos):
-                    transition(15)
+                    settings_window()
         mouse_pos = pygame.mouse.get_pos()
         for btn in buttons:
             if btn.on_hovered(mouse_pos):
