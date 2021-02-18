@@ -265,7 +265,7 @@ camera = Camera()  # создаём объект камеры
 start = time.monotonic()
 hero = "wolf"
 level_ = 1
-game(hero, level_)
+# game(hero, level_)
 # stop = time.monotonic()
 # time_delta = stop - start
 # update_db(name, hero, level_, time_delta, death_count)
