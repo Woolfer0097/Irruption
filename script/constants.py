@@ -7,8 +7,9 @@ import pytmx  # Библиотека загрузки карт для уровн
 import os  # Библиотека для работы с операционной системой
 import sys  # Библиотека для работы с файлами
 import time  # Библиотека для работы со временем
+import random  # Библиотека для работы со случайными значениями
 
-WIDTH, HEIGHT = SIZE = 1024, 683
+SCREEN_WIDTH, SCREEN_HEIGHT = SCREEN_SIZE = 1024, 683
 STEP = 10
 JUMP_STRENGTH = 10
 ANIMATION_FPS = 15
@@ -18,9 +19,9 @@ BLACK = pygame.Color("black")
 GRAVITY = 0.8
 SCALE_COEFF = 1.2
 FONT_SIZE = 72
-LEVELS = {1: "безымянный.tmx", 2: "level_2.tmx", 3: "level_3.tmx"}
+DIFFICULTY = {"hard": 15, "medium": 12, "easy": 10, "tutorial": 8}
 all_sprites = pygame.sprite.Group()
 buttons = pygame.sprite.Group()
-screen = pygame.display.set_mode(SIZE)
+screen = pygame.display.set_mode(SCREEN_SIZE)
 clock = pygame.time.Clock()
 pygame.display.set_caption("Irruption")

@@ -78,14 +78,7 @@ def update_db(name, hero, level, time_delta, deaths):
 # Функция запуска начального экрана
 def start_screen():
     current_frame = 0
-    i_s = cut_sheet(load_image("icons.png"), 5, 2, 74, 71)  # icon_sheet
-    # (i_s - сокращено для удобной записи в словаре)
-    icons = {"settings": i_s[0], "pause": i_s[1], "reset": i_s[2], "star": i_s[3],
-             "cross": i_s[4], "hp": i_s[5], "cup": i_s[6], "volume_down": i_s[7],
-             "volume_up": i_s[8]}
-    bg_frames = cut_sheet(load_image("start_screen.png"), 2, 1, 1024, 683)
-    long_button_frames = cut_sheet(load_image("buttons.png"), 1, 7, 256, 64)
-    short_button_frames = cut_sheet(load_image("short_btn.png"), 3, 1, 96, 78)
+    buttons.empty()
     start_btn = Button(long_button_frames, 384, 310, "Играть")
     info_btn = Button(long_button_frames, 384, 406, "Об авторах")
     exit_btn = Button(long_button_frames, 384, 502, "Выход")
@@ -142,3 +135,13 @@ def choose_hero():
         all_sprites.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
+
+
+i_s = cut_sheet(load_image("icons.png"), 5, 2, 74, 71)  # icon_sheet
+# (i_s - сокращено для удобной записи в словаре)
+icons = {"settings": i_s[0], "pause": i_s[1], "reset": i_s[2], "star": i_s[3],
+         "cross": i_s[4], "hp": i_s[5], "cup": i_s[6], "volume_down": i_s[7],
+         "volume_up": i_s[8]}
+bg_frames = cut_sheet(load_image("start_screen.png"), 2, 1, 1024, 683)
+long_button_frames = cut_sheet(load_image("buttons.png"), 1, 7, 256, 64)
+short_button_frames = cut_sheet(load_image("short_btn.png"), 3, 1, 96, 78)

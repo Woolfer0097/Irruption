@@ -36,12 +36,12 @@ class Player(pygame.sprite.Sprite):
                     self.is_jump = False
                     self.jump_power = JUMP_STRENGTH
                 else:
-                    self.rect.y += (self.jump_power ** 2) // 2
+                    self.rect.y += (self.jump_power ** 2) / 2
             self.jump_power -= GRAVITY  # Стадия прыжка уменьшается
 
     # Передвижение игрока в правую сторону
     def walk_right(self):
-        if self.rect.x + STEP < WIDTH - self.width * 2:  # Проверяем не касается ли игрок стенок
+        if self.rect.x + STEP < SCREEN_WIDTH - self.width * 2:  # Проверяем не касается ли игрок стенок
             self.rect = self.rect.move(STEP, 0)  # Передвигаем игрока вправо на "шаг"
         self.calculate_frame(1)  # Вычисляем кадр анимации
         self.image = self.walk_frames[self.current_frame // ANIMATION_FPS]
@@ -88,52 +88,80 @@ class Player(pygame.sprite.Sprite):
 
     # Функция, обновляющая игрока (реализация анимации)
     def update(self, *args):
-        if self.rect.y == 0:
-            self.deaths += 1
-            return
-        # Проверка на соприкосновение игрока и объектов (Если коллизий нет, то опускаем игрока)
-        if not pygame.sprite.spritecollideany(self, objects_group) and not self.is_jump:
-            self.rect.y += (self.jump_power ** 2) // 2  # Опускаем игрока
         # Проверка на нажатие клавиш
-        keys = pygame.key.get_pressed()
-        if args and keys:
-            if keys[pygame.K_SPACE] and not self.is_jump:
-                self.is_jump = True
-            elif keys[pygame.K_LEFT]:
-                self.occupation = 2
-            elif keys[pygame.K_RIGHT]:
-                self.occupation = 1
+        # for platform in platforms:
+        #     if playerman.rect.colliderect(platform.rect):
+        #         collide = True
+        #         playerman.isJump = False
+        #         if (platform.rect.collidepoint(playerman.rect.right, playerman.rect.bottom) or
+        #                 platform.rect.collidepoint(playerman.rect.left, playerman.rect.bottom)):
+        #             playerman.y = platform.rect.top - playerman.height + 1
+        #             playerman.moveright = True
+        #             playerman.moveleft = True
+        #
+        #         if (platform.rect.collidepoint(playerman.rect.right, playerman.rect.top) or
+        #                 platform.rect.collidepoint(playerman.rect.right, playerman.rect.bottom - 10)):
+        #             playerman.moveright = False
+        #         elif (platform.rect.collidepoint(playerman.rect.left, playerman.rect.top) or
+        #               platform.rect.collidepoint(playerman.rect.left, playerman.rect.bottom - 10)):
+        #             playerman.moveleft = False
+        #     else:
+        #         playerman.moveright = True
+        #         playerman.moveleft = True
+        for platform in objects_group:
+            if pygame.sprite.spritecollideany(self, objects_group):
+                keys = pygame.key.get_pressed()
+                if args and keys:
+                    if keys[pygame.K_SPACE] and not self.is_jump:
+                        self.is_jump = True
+                    elif keys[pygame.K_LEFT]:
+                        if not platform.rect.collidepoint(self.rect.centerx, self.rect.top) \
+                                or not platform.rect.collidepoint(self.rect.centerx, self.rect.bottom - 10):
+                            self.occupation = 2
+                        else:
+                            self.occupation = 0
+                    elif keys[pygame.K_RIGHT]:
+                        if not platform.rect.collidepoint(self.rect.centerx, self.rect.top) \
+                                or not platform.rect.collidepoint(self.rect.centerx, self.rect.bottom - 10):
+                            self.occupation = 1
+                        else:
+                            self.occupation = 0
+                    else:
+                        self.occupation = 0
             else:
-                self.occupation = 0
+                if not self.is_jump:
+                    self.rect.y += (self.jump_power ** 2) // 2
 
 
 # Класс, описывающий платформу
 class Platform(pygame.sprite.Sprite):
-    def __init__(self, image, pos_x, pos_y, tile_size):
+    def __init__(self, image, pos_x, pos_y):
         super().__init__(objects_group)  # Добавляем платформу в группу объектов
         self.image = image  # Устанавливаем изображение для платформы
-        self.rect = self.image.get_rect().move(  # Передвигаем платформу на переданные координаты
-            pos_x * tile_size,
-            pos_y * tile_size)
+        self.rect = self.image.get_rect().move(pos_x, pos_y)  # Передвигаем платформу на переданные координаты
         self.abs_pos = (self.rect.x, self.rect.y)  # Устанавливаем позицию, независимую от движения камеры
 
 
-# Класс, описывающий генерацию уровня
-class Level:
-    def __init__(self, filename):
-        self.map = pytmx.load_pygame(os.path.join('../data/maps', filename))  # Загружаем карту
-        self.height, self.width = self.map.height, self.map.width  # Высота и ширина карты
-        self.tile_size = self.map.tilewidth  # Размер тайла (квадрата)
+class Level(object):
+    def __init__(self, difficulty):
+        self.level = []
+        self.platform_width, self.platform_height = \
+            platform_image.get_width(), platform_image.get_height()
+        self.difficulty = DIFFICULTY[difficulty]
 
-    def render(self, screen):  # Передаётся экран, на который отрисовываются объекты
-        for y in range(self.height):
-            for x in range(self.width):
-                image = self.map.get_tile_image(x, y, 0)  # Изображение тайла
-                if image:
-                    platform = Platform(image, x, y, self.tile_size)  # Создаём объект платформы
+    def render(self):
+        self.generate_level()
+        # Перебираем массив и добавляем каждую платформу в группу спрайтов - platform_list
+        for platform in self.level:
+            x, y = platform
+            block = Platform(platform_image, x, y)
 
-    def get_tile_id(self, position):  # Функция для получения ID тайла
-        return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]
+    def generate_level(self):
+        self.level = [[random.randint(self.platform_width * i,
+                                      self.platform_width * i + random.randint(50, 150)),
+                       random.randint(SCREEN_HEIGHT - 300, SCREEN_HEIGHT - 185)]
+                      for i in range(1, self.difficulty)]
+        self.level.insert(0, [0, 500])
 
 
 # Класс, описывающий камеру
@@ -166,34 +194,70 @@ def game(hero, lvl):
         player = Player(
             cut_sheet(load_image("wolf_stay.png"), *stay_parameters),
             cut_sheet(load_image("walking_wolf.png"), *walk_parameters), (135, 100))
-    level = Level(LEVELS[lvl])  # создаём объект уровня
-    level.render(screen)
+    paused = False
+    buttons.empty()
+    level = Level("tutorial")  # создаём объект уровня, передаём сложность
+    level.render()
     camera.update(player)  # привязываем игрока к камере (позиционировать камеру на игрока)
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            player_group.update(event)
-        screen.fill(WHITE)  # Отрисовываем фон каждый цикл
-        screen.blit(load_image("background.png"), (0, 0))
-        for sprite in objects_group:
-            screen.blit(sprite.image, (sprite.rect.x, sprite.rect.y))
-        player_group.draw(screen)  # Отрисовываем игрока
-        player_group.update()  # Обновляем игрока каждый цикл
-        # death_count = player.deaths
-        # Проверка на то, чем занят игрок
-        if player.occupation == 0:
-            player.idle()
-        if player.occupation == 1:
-            player.walk_right()
-        if player.occupation == 2:
-            player.walk_left()
-        if player.is_jump:
-            player.jump()
-        pygame.display.flip()
-        clock.tick(FPS)
+        if paused:
+            volume_on_btn = Button(short_button_frames, 392, 413, "", icons["volume_up"])
+            volume_off_btn = Button(short_button_frames, 536, 413, "", icons["volume_down"])
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if volume_off_btn.on_hovered(event.pos):
+                        transition()
+                    if volume_on_btn.on_hovered(event.pos):
+                        transition()
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_ESCAPE]:
+                    paused = False
+            mouse_pos = pygame.mouse.get_pos()
+            for btn in buttons:
+                if btn.on_hovered(mouse_pos):
+                    btn.highlight()
+                else:
+                    btn.set_default_image()
+            screen.blit(pause_window, (331, 123))
+            buttons.draw(screen)
+            buttons.update()
+            pygame.display.flip()
+            clock.tick(FPS)
+        else:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_ESCAPE] and not player.is_jump:
+                    paused = True
+                player_group.update(event)
+            # Рисуем задний фон
+            screen.fill(WHITE)
+            screen.blit(bg, (0, 0))
+            # Рисуем все платформы из группы спрайтов
+            objects_group.draw(screen)
+            objects_group.update()
+            player_group.draw(screen)  # Отрисовываем игрока
+            player_group.update()  # Обновляем игрока каждый цикл
+            # death_count = player.deaths
+            # Проверка на то, чем занят игрок
+            if player.occupation == 0:
+                player.idle()
+            if player.occupation == 1:
+                player.walk_right()
+            if player.occupation == 2:
+                player.walk_left()
+            if player.is_jump:
+                player.jump()
+            pygame.display.flip()
+            clock.tick(FPS)
 
 
+pause_window = load_image("pause_window.png")
+bg = pygame.transform.scale(load_image("fon.png"), (1024, 683))
+platform_image = load_image("mini.png")
 player_group = pygame.sprite.Group()
 objects_group = pygame.sprite.Group()
 death_count = 0
@@ -201,7 +265,8 @@ camera = Camera()  # создаём объект камеры
 start = time.monotonic()
 hero = "wolf"
 level_ = 1
-# game(hero, level_)
+game(hero, level_)
 # stop = time.monotonic()
 # time_delta = stop - start
 # update_db(name, hero, level_, time_delta, death_count)
+bg = load_image("fon.png")
