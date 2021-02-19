@@ -61,10 +61,6 @@ def name_window():
     pass
 
 
-def settings_window():
-    transition()
-
-
 def update_db(name, hero, level, time_delta, deaths):
     connection = sqlite3.connect("data/databases/score.sqlite")
     cursor = connection.cursor()
@@ -78,39 +74,83 @@ def update_db(name, hero, level, time_delta, deaths):
 # Функция запуска начального экрана
 def start_screen():
     current_frame = 0
+    settings_flag = False
+    control_flag = False
     buttons.empty()
-    start_btn = Button(long_button_frames, 384, 310, "Играть")
-    info_btn = Button(long_button_frames, 384, 406, "Об авторах")
-    exit_btn = Button(long_button_frames, 384, 502, "Выход")
-    settings_btn = Button(short_button_frames, 910, 584, "", icons["volume_up"])
+    settings_window = load_image("settings_window.png")
+    control_window = load_image("control_window.png")
+    blured_window = load_image("blured_window.png")
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            if event.type == pygame.MOUSEBUTTONUP:
-                if start_btn.on_hovered(event.pos):
-                    transition()
-                    return 0
-                if info_btn.on_hovered(event.pos):
-                    transition()
-                    return 1
-                if exit_btn.on_hovered(event.pos):
-                    transition()
+        if settings_flag:
+            buttons.empty()
+            volume_on_btn = Button(short_button_frames, 392, 413, "", icons["volume_up"])
+            volume_off_btn = Button(short_button_frames, 536, 413, "", icons["volume_down"])
+            control = Button(long_button_frames, 384, 306, "Управление")
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
                     terminate()
-                if settings_btn.on_hovered(event.pos):
-                    settings_window()
-        mouse_pos = pygame.mouse.get_pos()
-        for btn in buttons:
-            if btn.on_hovered(mouse_pos):
-                btn.highlight()
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if volume_off_btn.on_hovered(event.pos):
+                        transition()
+                    if volume_on_btn.on_hovered(event.pos):
+                        transition()
+                    if control.on_hovered(event.pos):
+                        control_flag = True
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_ESCAPE]:
+                    if control_flag:
+                        control_flag = False
+                    else:
+                        settings_flag = False
+                        control_flag = False
+            mouse_pos = pygame.mouse.get_pos()
+            for btn in buttons:
+                if btn.on_hovered(mouse_pos):
+                    btn.highlight()
+                else:
+                    btn.set_default_image()
+            screen.blit(blured_window, (0, 0))
+            if control_flag:
+                screen.blit(control_window, (0, 0))
             else:
-                btn.set_default_image()
-        screen.blit(bg_frames[current_frame // ANIMATION_FPS], (0, 0))
-        current_frame = calculate_frame(current_frame, bg_frames)
-        buttons.draw(screen)
-        buttons.update()
-        pygame.display.flip()
-        clock.tick(FPS)
+                screen.blit(settings_window, (331, 123))
+                buttons.draw(screen)
+                buttons.update()
+            pygame.display.flip()
+            clock.tick(FPS)
+        else:
+            buttons.empty()
+            start_btn = Button(long_button_frames, 384, 310, "Играть")
+            info_btn = Button(long_button_frames, 384, 406, "Об авторах")
+            exit_btn = Button(long_button_frames, 384, 502, "Выход")
+            settings_btn = Button(short_button_frames, 910, 584, "", icons["settings"])
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if start_btn.on_hovered(event.pos):
+                        transition()
+                        return 0
+                    if info_btn.on_hovered(event.pos):
+                        transition()
+                        return 1
+                    if exit_btn.on_hovered(event.pos):
+                        transition()
+                        terminate()
+                    if settings_btn.on_hovered(event.pos):
+                        settings_flag = True
+            mouse_pos = pygame.mouse.get_pos()
+            for btn in buttons:
+                if btn.on_hovered(mouse_pos):
+                    btn.highlight()
+                else:
+                    btn.set_default_image()
+            screen.blit(bg_frames[current_frame // ANIMATION_FPS], (0, 0))
+            current_frame = calculate_frame(current_frame, bg_frames)
+            buttons.draw(screen)
+            buttons.update()
+            pygame.display.flip()
+            clock.tick(FPS)
 
 
 # Функция запускающая экран выбора персонажей
