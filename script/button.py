@@ -23,7 +23,6 @@ class Button(pygame.sprite.Sprite):
 
     # Функция устанавливающая надпись на кнопке
     def set_text(self):
-        font = pygame.font.Font("../data/fonts/thintel.ttf", FONT_SIZE)
         text = font.render(self.text, True, WHITE)
         screen.blit(text, text.get_rect(center=self.rect.center))
 

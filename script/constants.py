@@ -22,6 +22,7 @@ FONT_SIZE = 72
 DIFFICULTY = {"hard": 15, "medium": 12, "easy": 10, "tutorial": 8}
 all_sprites = pygame.sprite.Group()
 buttons = pygame.sprite.Group()
+font = pygame.font.Font("../data/fonts/thintel.ttf", FONT_SIZE)
 screen = pygame.display.set_mode(SCREEN_SIZE)
 clock = pygame.time.Clock()
 pygame.display.set_caption("Irruption")

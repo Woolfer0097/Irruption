@@ -182,6 +182,20 @@ class Camera:
 
 
 # Функция запуска мини-игры
+def frame_generate(hero):
+    if hero == "lynx":
+        # hero_image = load_image("lynx_avatar.png")
+        hero_name = "Рыська"
+    else:
+        # hero_image = load_image("wolf_avatar.png")
+        hero_name = "Волчи"
+    # player_frame.blit(hero_image, (0, 0))
+    text = font.render(hero_name, True, WHITE)
+    player_frame = load_image("player_frame.png")
+    player_frame.blit(text, (200 - text.get_width() // 2, text.get_height() // 2))
+    return player_frame
+
+
 def game(hero, lvl):
     stay_parameters = [5, 2, 256, 256]  # Параметры для создания спрайт-листа бездействия игрока
     walk_parameters = [2, 1, 256, 256]  # Параметры для создания спрайт-листа ходьбы игрока
@@ -201,8 +215,10 @@ def game(hero, lvl):
     camera.update(player)  # привязываем игрока к камере (позиционировать камеру на игрока)
     while True:
         if paused:
-            volume_on_btn = Button(short_button_frames, 392, 413, "", icons["volume_up"])
-            volume_off_btn = Button(short_button_frames, 536, 413, "", icons["volume_down"])
+            buttons.empty()
+            volume_on_btn = Button(short_light_button, 375, 471, "", icons["volume_up"])
+            volume_off_btn = Button(short_light_button, 567, 471, "", icons["volume_down"])
+            exit_btn = Button(long_light_button, 362, 342, "Выход")
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
@@ -211,6 +227,10 @@ def game(hero, lvl):
                         transition()
                     if volume_on_btn.on_hovered(event.pos):
                         transition()
+                    if exit_btn.on_hovered(event.pos):
+                        update_db()
+                        transition()
+                        start_screen()
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_ESCAPE]:
                     paused = False
@@ -220,7 +240,10 @@ def game(hero, lvl):
                     btn.highlight()
                 else:
                     btn.set_default_image()
-            screen.blit(pause_window, (331, 123))
+            screen.blit(blured_bg, (0, 0))
+            screen.blit(settings_window, (293, 43))
+            text = font.render("Пауза", True, WHITE)
+            screen.blit(text, (457, 189))
             buttons.draw(screen)
             buttons.update()
             pygame.display.flip()
@@ -236,6 +259,8 @@ def game(hero, lvl):
             # Рисуем задний фон
             screen.fill(WHITE)
             screen.blit(bg, (0, 0))
+            player_frame = frame_generate(hero)
+            screen.blit(player_frame, (10, 10))
             # Рисуем все платформы из группы спрайтов
             objects_group.draw(screen)
             objects_group.update()
@@ -255,18 +280,15 @@ def game(hero, lvl):
             clock.tick(FPS)
 
 
-pause_window = load_image("pause_window.png")
-bg = pygame.transform.scale(load_image("fon.png"), (1024, 683))
+pause_window = load_image("window.png")
 platform_image = load_image("mini.png")
 player_group = pygame.sprite.Group()
 objects_group = pygame.sprite.Group()
 death_count = 0
 camera = Camera()  # создаём объект камеры
 start = time.monotonic()
-hero = "wolf"
 level_ = 1
 # game(hero, level_)
 # stop = time.monotonic()
 # time_delta = stop - start
 # update_db(name, hero, level_, time_delta, death_count)
-bg = load_image("fon.png")

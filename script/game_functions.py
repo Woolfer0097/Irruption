@@ -61,14 +61,15 @@ def name_window():
     pass
 
 
-def update_db(name, hero, level, time_delta, deaths):
-    connection = sqlite3.connect("data/databases/score.sqlite")
-    cursor = connection.cursor()
-    score = (time_delta // deaths) * 100  # Вычисляем текущий счёт игрока
-    sql_requests = [f"UPDATE PROGRESS SET {level} WHERE NAME = {name}",
-                    f"UPDATE SCORE SET {score} WHERE NAME = {name}"]
-    for sql_request in sql_requests:
-        cursor.execute(sql_request)
+def update_db():  # name, hero, level, time_delta, deaths
+    pass
+    # connection = sqlite3.connect("data/databases/score.sqlite")
+    # cursor = connection.cursor()
+    # score = (time_delta // deaths) * 100  # Вычисляем текущий счёт игрока
+    # sql_requests = [f"UPDATE PROGRESS SET {level} WHERE NAME = {name}",
+    #                 f"UPDATE SCORE SET {score} WHERE NAME = {name}"]
+    # for sql_request in sql_requests:
+    #     cursor.execute(sql_request)
 
 
 # Функция запуска начального экрана
@@ -77,15 +78,12 @@ def start_screen():
     settings_flag = False
     control_flag = False
     buttons.empty()
-    settings_window = load_image("settings_window.png")
-    control_window = load_image("control_window.png")
-    blured_window = load_image("blured_window.png")
     while True:
         if settings_flag:
             buttons.empty()
-            volume_on_btn = Button(short_button_frames, 392, 413, "", icons["volume_up"])
-            volume_off_btn = Button(short_button_frames, 536, 413, "", icons["volume_down"])
-            control = Button(long_button_frames, 384, 306, "Управление")
+            volume_on_btn = Button(short_light_button, 375, 471, "", icons["volume_up"])
+            volume_off_btn = Button(short_light_button, 567, 471, "", icons["volume_down"])
+            control = Button(long_light_button, 362, 342, "Управление")
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
@@ -109,11 +107,13 @@ def start_screen():
                     btn.highlight()
                 else:
                     btn.set_default_image()
-            screen.blit(blured_window, (0, 0))
+            screen.blit(blured_bg, (0, 0))
             if control_flag:
                 screen.blit(control_window, (0, 0))
             else:
-                screen.blit(settings_window, (331, 123))
+                screen.blit(settings_window, (293, 43))
+                text = font.render("Настройки", True, WHITE)
+                screen.blit(text, (416, 189))
                 buttons.draw(screen)
                 buttons.update()
             pygame.display.flip()
@@ -185,3 +185,10 @@ icons = {"settings": i_s[0], "pause": i_s[1], "reset": i_s[2], "star": i_s[3],
 bg_frames = cut_sheet(load_image("start_screen.png"), 2, 1, 1024, 683)
 long_button_frames = cut_sheet(load_image("buttons.png"), 1, 7, 256, 64)
 short_button_frames = cut_sheet(load_image("short_btn.png"), 3, 1, 96, 78)
+short_light_button = [load_image("short_light_button.png")]
+long_light_button = [load_image("long_light_button.png")]
+control_window = load_image("control_window.png")
+settings_window = load_image("window.png")
+pause_window = load_image("window.png")
+bg = load_image("bg.png")
+blured_bg = load_image("blured_bg.png")
