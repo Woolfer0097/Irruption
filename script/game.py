@@ -1,7 +1,5 @@
 from constants import *
 
-FPS = 60
-
 
 class Player(pygame.sprite.Sprite):
     # Передаём спрайт-лист с анимацией игрока, количество рядов и колонок на спрайт-листе
@@ -18,14 +16,12 @@ class Player(pygame.sprite.Sprite):
         self.walk_frames = walk_frames  # Список, с анимацией ходьбы игрока
         self.current_frame = 0  # Текущий кадр - нулевой
         self.image = self.stay_frames[self.current_frame]
-        self.width = self.image.get_width() // 4  # Ширина игрока
-        self.height = self.image.get_height()  # Высота игрока
-        self.rect = self.image.get_rect()  # Получаем прямоугольную область игрока
-        self.rect.x = self.rect.x // 2
-        self.dx = 0
-        self.default_x, self.default_y = pos  # Начальные координаты игрока
-        self.rect = self.rect.move(*pos)  # Передвигаем игрока на заданную позицию
-        self.dx, self.dy = pos  # Переменная позиции игрока
+        self.rect = pygame.Rect(*pos, 184, 240)  # Получаем прямоугольную область игрока
+        self.width = self.rect.width  # Ширина игрока
+        self.height = self.rect.height  # Высота игрока
+        self.x, self.y = pos
+        self.pos = pos
+        self.rect = self.rect.move(*self.pos)  # Передвигаем игрока на заданную позицию
 
     # Прыжок игрока
     def jump(self):
@@ -42,8 +38,6 @@ class Player(pygame.sprite.Sprite):
 
     # Передвижение игрока в правую сторону
     def walk_right(self):
-        if self.rect.x + STEP < SCREEN_WIDTH - self.width * 2:  # Проверяем не касается ли игрок стенок
-            self.rect = self.rect.move(STEP, 0)  # Передвигаем игрока вправо на "шаг"
         self.calculate_frame(1)  # Вычисляем кадр анимации
         self.image = self.walk_frames[self.current_frame // ANIMATION_FPS]
         # self.camera_apply()  # Применяем камеру ко всем объектам,
@@ -51,22 +45,11 @@ class Player(pygame.sprite.Sprite):
 
     # Передвижение игрока в левую сторону
     def walk_left(self):
-        if self.rect.x - STEP > 0:
-            self.rect = self.rect.move(-STEP, 0)
         self.calculate_frame(1)  # Вычисляем кадр анимации
         self.image = self.walk_frames[self.current_frame // ANIMATION_FPS]
         self.flip()  # Переворачиваем изображение игрока, т.к. движется влево
         # self.camera_apply()  # Применяем камеру ко всем объектам,
         # чтобы они сместились на расстояние, которое прошёл игрок
-
-    # Перемещает камеру
-    def camera_apply(self):
-        # Находим смещение игрока
-        self.dx += self.dx - self.rect.x
-        self.dy += self.dy - self.rect.y
-        # Применяем смещение камеры ко всем объектам
-        for sprite in objects_group:
-            Camera().apply(sprite)
 
     # Вычисление текущего кадра (передаётся действие игрока 0 - бездействие, 1 - ходьба)
     def calculate_frame(self, action):
@@ -89,42 +72,21 @@ class Player(pygame.sprite.Sprite):
 
     # Функция, обновляющая игрока (реализация анимации)
     def update(self, *args):
-        # Проверка на нажатие клавиш
-        # for platform in platforms:
-        #     if playerman.rect.colliderect(platform.rect):
-        #         collide = True
-        #         playerman.isJump = False
-        #         if (platform.rect.collidepoint(playerman.rect.right, playerman.rect.bottom) or
-        #                 platform.rect.collidepoint(playerman.rect.left, playerman.rect.bottom)):
-        #             playerman.y = platform.rect.top - playerman.height + 1
-        #             playerman.moveright = True
-        #             playerman.moveleft = True
-        #
-        #         if (platform.rect.collidepoint(playerman.rect.right, playerman.rect.top) or
-        #                 platform.rect.collidepoint(playerman.rect.right, playerman.rect.bottom - 10)):
-        #             playerman.moveright = False
-        #         elif (platform.rect.collidepoint(playerman.rect.left, playerman.rect.top) or
-        #               platform.rect.collidepoint(playerman.rect.left, playerman.rect.bottom - 10)):
-        #             playerman.moveleft = False
-        #     else:
-        #         playerman.moveright = True
-        #         playerman.moveleft = True
         pygame.draw.rect(screen, WHITE, self.rect, 1)
         for platform in objects_group:
+            pygame.draw.rect(screen, WHITE, platform.rect, 1)
             if pygame.sprite.spritecollideany(self, objects_group):
                 keys = pygame.key.get_pressed()
                 if args and keys:
                     if keys[pygame.K_SPACE] and not self.is_jump:
                         self.is_jump = True
                     elif keys[pygame.K_LEFT]:
-                        if not platform.rect.collidepoint(self.rect.centerx, self.rect.top) \
-                                or not platform.rect.collidepoint(self.rect.centerx, self.rect.bottom - 10):
+                        if not pygame.sprite.collide_mask(self, platform):
                             self.occupation = 2
                         else:
                             self.occupation = 0
                     elif keys[pygame.K_RIGHT]:
-                        if not platform.rect.collidepoint(self.rect.centerx, self.rect.top) \
-                                or not platform.rect.collidepoint(self.rect.centerx, self.rect.bottom - 10):
+                        if not pygame.sprite.collide_mask(self, platform):
                             self.occupation = 1
                         else:
                             self.occupation = 0
@@ -142,6 +104,21 @@ class Platform(pygame.sprite.Sprite):
         self.image = image  # Устанавливаем изображение для платформы
         self.rect = self.image.get_rect().move(pos_x, pos_y)  # Передвигаем платформу на переданные координаты
         self.abs_pos = (pos_x, pos_y)  # Устанавливаем позицию, независимую от движения камеры
+        self.mask = pygame.mask.from_surface(self.image)
+
+
+class Border(pygame.sprite.Sprite):
+    # строго вертикальный или строго горизонтальный отрезок
+    def __init__(self, x1, y1, x2, y2):
+        super().__init__(all_sprites)
+        if x1 == x2:  # вертикальная стенка
+            self.add(borders)
+            self.image = pygame.Surface([1, y2 - y1])
+            self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
+        else:  # горизонтальная стенка
+            self.add(borders)
+            self.image = pygame.Surface([x2 - x1, 1])
+            self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
 
 
 class Level(object):
@@ -156,10 +133,10 @@ class Level(object):
         # Перебираем массив и добавляем каждую платформу в группу спрайтов - platform_list
         for platform in self.level:
             x, y = platform
-            block = Platform(platform_image, x, y)
+            Platform(platform_image, x, y)
 
     def generate_level(self):
-        self.level = [[random.randint(self.platform_width * i + 100,
+        self.level = [[random.randint(self.platform_width * i + 50,
                                       self.platform_width * i + 150),
                        random.randint(SCREEN_HEIGHT - 300, SCREEN_HEIGHT - 185)]
                       for i in range(1, self.difficulty)]
@@ -171,7 +148,6 @@ class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
         self.dx = 0
-        self.dy = 0
 
     # сдвинуть объект obj на смещение камеры
     def apply(self, obj):
@@ -180,4 +156,3 @@ class Camera:
     # позиционировать камеру на объекте target
     def update(self, target):
         self.dx = 0
-        self.dy = 0

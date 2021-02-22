@@ -1,4 +1,4 @@
-# Библиотеки и константы для игры
+# Библиотеки, константы для игры и глобальные функции
 
 
 import pygame  # Основная библиотека (Движок игры)
@@ -9,6 +9,12 @@ import sys  # Библиотека для работы с файлами
 import time  # Библиотека для работы со временем
 import random  # Библиотека для работы со случайными значениями
 from moviepy.editor import *
+
+
+# Функция выключения
+def terminate():
+    pygame.quit()
+    sys.exit()
 
 
 # Функция загрузки изображения
@@ -43,8 +49,48 @@ def cut_sheet(sheet, columns, rows, obj_width, obj_height):
     return frames
 
 
+def play_scene(filename):
+    scene = VideoFileClip(filename)
+    scene.preview()
+    return
+
+
+def calculate_frame(current_frame, frames):
+    current_frame += 1
+    if current_frame < len(frames) * ANIMATION_FPS:
+        pass
+    else:
+        current_frame = 0
+    return current_frame
+
+
+# Затухание экрана (Передаётся задержка)
+def transition(delay=15):
+    for size in range(40):
+        black_rect = pygame.Surface((1024, 20 * size))  # - переход сверху - вниз
+        black_rect.fill(BLACK)
+        screen.blit(black_rect, (black_rect.get_rect(center=screen.get_rect().center)))
+        pygame.display.flip()
+        pygame.time.delay(delay)
+
+
+def name_window():
+    pass
+
+
+def update_db():  # name, hero, level, time_delta, deaths
+    pass
+    # connection = sqlite3.connect("data/databases/score.sqlite")
+    # cursor = connection.cursor()
+    # score = (time_delta // deaths) * 100  # Вычисляем текущий счёт игрока
+    # sql_requests = [f"UPDATE PROGRESS SET {level} WHERE NAME = {name}",
+    #                 f"UPDATE SCORE SET {score} WHERE NAME = {name}"]
+    # for sql_request in sql_requests:
+    #     cursor.execute(sql_request)
+
+
 SCREEN_WIDTH, SCREEN_HEIGHT = SCREEN_SIZE = 1024, 683
-STEP = 10
+STEP = 2
 JUMP_STRENGTH = 10
 ANIMATION_FPS = 15
 FPS = 30
@@ -54,6 +100,7 @@ GRAVITY = 0.8
 SCALE_COEFF = 1.2
 FONT_SIZE = 72
 DIFFICULTY = {"hard": 15, "medium": 12, "easy": 10, "tutorial": 8}
+hero = "wolf"
 all_sprites = pygame.sprite.Group()
 buttons = pygame.sprite.Group()
 font = pygame.font.Font("../data/fonts/thintel.ttf", FONT_SIZE)
@@ -62,6 +109,7 @@ clock = pygame.time.Clock()
 pygame.display.set_caption("Irruption")
 player_group = pygame.sprite.Group()
 objects_group = pygame.sprite.Group()
+borders = pygame.sprite.Group()
 death_count = 0
 pause_window, settings_window = load_image("window.png"), load_image("window.png")
 platform_image = load_image("mini.png")

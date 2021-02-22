@@ -1,51 +1,5 @@
 from game import *
-from button import Button
-
-
-# Функция выключения
-def terminate():
-    pygame.quit()
-    sys.exit()
-
-
-def play_scene(filename):
-    scene = VideoFileClip(filename)
-    scene.preview()
-    return
-
-
-def calculate_frame(current_frame, frames):
-    current_frame += 1
-    if current_frame < len(frames) * ANIMATION_FPS:
-        pass
-    else:
-        current_frame = 0
-    return current_frame
-
-
-# Затухание экрана (Передаётся задержка)
-def transition(delay=15):
-    for size in range(40):
-        black_rect = pygame.Surface((1024, 20 * size))  # - переход сверху - вниз
-        black_rect.fill(BLACK)
-        screen.blit(black_rect, (black_rect.get_rect(center=screen.get_rect().center)))
-        pygame.display.flip()
-        pygame.time.delay(delay)
-
-
-def name_window():
-    pass
-
-
-def update_db():  # name, hero, level, time_delta, deaths
-    pass
-    # connection = sqlite3.connect("data/databases/score.sqlite")
-    # cursor = connection.cursor()
-    # score = (time_delta // deaths) * 100  # Вычисляем текущий счёт игрока
-    # sql_requests = [f"UPDATE PROGRESS SET {level} WHERE NAME = {name}",
-    #                 f"UPDATE SCORE SET {score} WHERE NAME = {name}"]
-    # for sql_request in sql_requests:
-    #     cursor.execute(sql_request)
+from button import *
 
 
 # Функция запуска начального экрана
@@ -176,6 +130,7 @@ def frame_generate(hero):
 
 
 def game(hero, lvl=1):
+    FPS = 60
     stay_parameters = [5, 2, 256, 256]  # Параметры для создания спрайт-листа бездействия игрока
     walk_parameters = [2, 1, 256, 256]  # Параметры для создания спрайт-листа ходьбы игрока
     # Установка игрока
@@ -191,8 +146,6 @@ def game(hero, lvl=1):
     buttons.empty()
     level = Level("tutorial")  # создаём объект уровня, передаём сложность
     level.render()
-    camera = Camera()
-    camera.update(player)  # привязываем игрока к камере (позиционировать камеру на игрока)
     while True:
         if paused:
             buttons.empty()
@@ -229,6 +182,10 @@ def game(hero, lvl=1):
             pygame.display.flip()
             clock.tick(FPS)
         else:
+            Border(5, 5, SCREEN_WIDTH - 5, 5)
+            Border(5, SCREEN_HEIGHT - 5, SCREEN_WIDTH - 5, SCREEN_HEIGHT - 5)
+            Border(5, 5, 5, SCREEN_HEIGHT - 5)
+            Border(SCREEN_WIDTH - 5, 5, SCREEN_WIDTH - 5, SCREEN_HEIGHT - 5)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
@@ -236,25 +193,35 @@ def game(hero, lvl=1):
                 if keys[pygame.K_ESCAPE] and not player.is_jump:
                     paused = True
                 player_group.update(event)
-            # Рисуем задний фон
-            screen.fill(WHITE)
-            screen.blit(bg, (0, 0))
-            player_frame = frame_generate(hero)
-            screen.blit(player_frame, (10, 10))
-            # Рисуем все платформы из группы спрайтов
-            objects_group.draw(screen)
-            objects_group.update()
+            screen.fill(WHITE)  # Очищаем экран
+            screen.blit(bg, (0, 0))  # Рисуем задний фон
+            player_frame = frame_generate(hero)  # Генерируем рамку с данными игрока
+            screen.blit(player_frame, (10, 10))  # Отрисовываем рамку
+            objects_group.draw(screen)  # Рисуем все платформы из группы спрайтов
+            objects_group.update()  # Обновляем
             player_group.draw(screen)  # Отрисовываем игрока
-            player_group.update()  # Обновляем игрока каждый цикл
+            player_group.update()  # Обновляем
             # death_count = player.deaths
             # Проверка на то, чем занят игрок
             if player.occupation == 0:
                 player.idle()
             if player.occupation == 1:
                 player.walk_right()
+                move(player, STEP)
             if player.occupation == 2:
                 player.walk_left()
+                move(player, -STEP)
             if player.is_jump:
                 player.jump()
             pygame.display.flip()
             clock.tick(FPS)
+
+
+camera = Camera()
+
+
+def move(player, x):
+    camera.dx -= (x - player.x)
+    player.x -= (x + player.x)
+    for sprite in objects_group:
+        camera.apply(sprite)
