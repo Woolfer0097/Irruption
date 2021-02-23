@@ -1,4 +1,4 @@
-# Библиотеки, константы для игры и глобальные функции
+# Библиотеки, константы для игры, глобальные функции и переменные
 
 
 import pygame  # Основная библиотека (Движок игры)
@@ -49,8 +49,16 @@ def cut_sheet(sheet, columns, rows, obj_width, obj_height):
     return frames
 
 
+# Функция устанавливающая надпись на кнопке
+def set_text(surface, text, font_size=72):
+    font_text = pygame.font.Font("../data/fonts/thintel.ttf", font_size)
+    text_result = font_text.render(text, True, WHITE)
+    screen.blit(text_result, text_result.get_rect(center=surface.rect.center))
+
+
 def play_scene(filename):
     scene = VideoFileClip(filename)
+    scene.volumex(0.4)
     scene.preview()
     return
 
@@ -90,7 +98,7 @@ def update_db():  # name, hero, level, time_delta, deaths
 
 
 SCREEN_WIDTH, SCREEN_HEIGHT = SCREEN_SIZE = 1024, 683
-STEP = 2
+STEP = 5
 JUMP_STRENGTH = 10
 ANIMATION_FPS = 15
 FPS = 30
@@ -113,17 +121,27 @@ borders = pygame.sprite.Group()
 death_count = 0
 pause_window, settings_window = load_image("window.png"), load_image("window.png")
 platform_image = load_image("mini.png")
+npc_platform_image = load_image("mini.png")
+avatar_frame_image = load_image("avatar_frame.png")
+dialog_frame_image = load_image("dialog_frame.png")
+dialog_total_frame = load_image("dialog_total_frame.png")
 choose_screen = load_image("choose_hero_window.png")
 i_s = cut_sheet(load_image("icons.png"), 5, 2, 74, 71)  # icon_sheet
 # (i_s - сокращено для удобной записи в словаре)
 icons = {"settings": i_s[0], "pause": i_s[1], "reset": i_s[2], "star": i_s[3],
          "cross": i_s[4], "hp": i_s[5], "cup": i_s[6], "volume_down": i_s[7],
          "volume_up": i_s[8]}
+texts = [[{"wolf": "Привет, кто ты?"}, {"bars": "Привет, я Ирбис и это моя территория!"},
+         {"wolf": "Ох, извини, я не хотел тревожить тебя..."}, {"bars": "Ну что ж... Просто так я тебя не отпущу!"},
+         {"bars": "Придётся тебе поиграть со мной!"}]]
 bg_frames = cut_sheet(load_image("start_screen.png"), 2, 1, 1024, 683)
 long_button_frames = cut_sheet(load_image("buttons.png"), 1, 7, 256, 64)
 short_button_frames = cut_sheet(load_image("short_btn.png"), 3, 1, 96, 78)
 short_light_button = [load_image("short_light_button.png")]
 long_light_button = [load_image("long_light_button.png")]
 control_window = load_image("control_window.png")
+info_screen = load_image("about_authors_screen.png")
 bg = load_image("bg.png")
 blured_bg = load_image("blured_bg.png")
+pygame.mixer.music.load("../data/sounds/bg.mp3")
+pygame.mixer.music.set_volume(0.2)

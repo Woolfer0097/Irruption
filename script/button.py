@@ -20,11 +20,6 @@ class Button(pygame.sprite.Sprite):
         self.text = text
         self.hovered = False
 
-    # Функция устанавливающая надпись на кнопке
-    def set_text(self):
-        text = font.render(self.text, True, WHITE)
-        screen.blit(text, text.get_rect(center=self.rect.center))
-
     # Функция, устанавливающая иконку
     def set_icon(self):
         screen.blit(self.icon, self.icon.get_rect(center=self.rect.center))
@@ -65,11 +60,10 @@ class Button(pygame.sprite.Sprite):
     # Функция, выполняющаяся каждый цикл (высчитывает текущий кадр, накладывает текст)
     def update(self):
         if self.text:
-            self.set_text()
+            set_text(self, self.text)
         if self.icon:
             self.set_icon()
         self.calculate_frame()
         if self.hovered:
             pass
-        else:
-            self.image = self.frames[self.current_frame // self.animation_fps]
+        self.image = self.frames[self.current_frame // self.animation_fps]

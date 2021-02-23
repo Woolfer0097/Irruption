@@ -7,6 +7,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, stay_frames, walk_frames, pos):
         super().__init__(player_group)
         self.is_jump = False  # Флаг прыжка
+        self.camera_stop = False
         self.occupation = 0  # Переменная - отвечает за действия игрока
         # 0 - бездействие, 1 - ходьба вправо,
         # 2 - ходьба влево, 3 - прыжок.
@@ -38,6 +39,8 @@ class Player(pygame.sprite.Sprite):
 
     # Передвижение игрока в правую сторону
     def walk_right(self):
+        if self.camera_stop:
+            self.rect.x += STEP
         self.calculate_frame(1)  # Вычисляем кадр анимации
         self.image = self.walk_frames[self.current_frame // ANIMATION_FPS]
         # self.camera_apply()  # Применяем камеру ко всем объектам,
@@ -45,6 +48,8 @@ class Player(pygame.sprite.Sprite):
 
     # Передвижение игрока в левую сторону
     def walk_left(self):
+        if self.camera_stop:
+            self.rect.x -= STEP
         self.calculate_frame(1)  # Вычисляем кадр анимации
         self.image = self.walk_frames[self.current_frame // ANIMATION_FPS]
         self.flip()  # Переворачиваем изображение игрока, т.к. движется влево
@@ -72,9 +77,9 @@ class Player(pygame.sprite.Sprite):
 
     # Функция, обновляющая игрока (реализация анимации)
     def update(self, *args):
-        pygame.draw.rect(screen, WHITE, self.rect, 1)
+        # pygame.draw.rect(screen, WHITE, self.rect, 1)
         for platform in objects_group:
-            pygame.draw.rect(screen, WHITE, platform.rect, 1)
+            # pygame.draw.rect(screen, WHITE, platform.rect, 1)i
             if pygame.sprite.spritecollideany(self, objects_group):
                 keys = pygame.key.get_pressed()
                 if args and keys:
@@ -83,17 +88,14 @@ class Player(pygame.sprite.Sprite):
                     elif keys[pygame.K_LEFT]:
                         if not pygame.sprite.collide_mask(self, platform):
                             self.occupation = 2
-                        else:
-                            self.occupation = 0
                     elif keys[pygame.K_RIGHT]:
                         if not pygame.sprite.collide_mask(self, platform):
                             self.occupation = 1
-                        else:
-                            self.occupation = 0
                     else:
                         self.occupation = 0
             else:
                 if not self.is_jump:
+                    self.occupation = 0
                     self.rect.y += (self.jump_power ** 2) // 2
 
 
@@ -127,6 +129,8 @@ class Level(object):
         self.platform_width, self.platform_height = \
             platform_image.get_width(), platform_image.get_height()
         self.difficulty = DIFFICULTY[difficulty]
+        self.level_start = 0
+        self.level_length = 0
 
     def render(self):
         self.generate_level()
@@ -134,12 +138,15 @@ class Level(object):
         for platform in self.level:
             x, y = platform
             Platform(platform_image, x, y)
+        Platform(npc_platform_image,
+                 self.platform_width * self.difficulty + 200, 400)
 
     def generate_level(self):
-        self.level = [[random.randint(self.platform_width * i + 50,
-                                      self.platform_width * i + 150),
-                       random.randint(SCREEN_HEIGHT - 300, SCREEN_HEIGHT - 185)]
+        self.level = [[random.randint(self.platform_width * i + 150,
+                                      self.platform_width * i + 160),
+                       random.randint(SCREEN_HEIGHT - 300, SCREEN_HEIGHT - 186)]
                       for i in range(1, self.difficulty)]
+        self.level_length = self.platform_width * (self.difficulty - 1)
         self.level.insert(0, [0, 500])
 
 

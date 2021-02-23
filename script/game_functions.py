@@ -1,13 +1,18 @@
 from game import *
 from button import *
+from dialog import *
+from constants import *
 
 
 # Функция запуска начального экрана
 def start_screen():
     current_frame = 0
+    volume = 0.2
     settings_flag = False
     control_flag = False
+    info_flag = False
     buttons.empty()
+    pygame.mixer.music.play(-1)
     while True:
         if settings_flag:
             buttons.empty()
@@ -19,9 +24,11 @@ def start_screen():
                     terminate()
                 if event.type == pygame.MOUSEBUTTONUP:
                     if volume_off_btn.on_hovered(event.pos):
-                        transition()
+                        volume -= 0.05
+                        pygame.mixer.music.set_volume(volume)
                     if volume_on_btn.on_hovered(event.pos):
-                        transition()
+                        volume += 0.05
+                        pygame.mixer.music.set_volume(volume)
                     if control.on_hovered(event.pos):
                         control_flag = True
                 keys = pygame.key.get_pressed()
@@ -60,15 +67,17 @@ def start_screen():
                 if event.type == pygame.MOUSEBUTTONUP:
                     if start_btn.on_hovered(event.pos):
                         transition()
-                        return 0
+                        return
                     if info_btn.on_hovered(event.pos):
-                        transition()
-                        return 1
+                        info_flag = True
                     if exit_btn.on_hovered(event.pos):
                         transition()
                         terminate()
                     if settings_btn.on_hovered(event.pos):
                         settings_flag = True
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        info_flag = False
             mouse_pos = pygame.mouse.get_pos()
             for btn in buttons:
                 if btn.on_hovered(mouse_pos):
@@ -79,6 +88,8 @@ def start_screen():
             current_frame = calculate_frame(current_frame, bg_frames)
             buttons.draw(screen)
             buttons.update()
+            if info_flag:
+                screen.blit(info_screen, (0, 0))
             pygame.display.flip()
             clock.tick(FPS)
 
@@ -96,10 +107,8 @@ def choose_hero():
                 terminate()
             if event.type == pygame.MOUSEBUTTONUP:
                 if wolf_btn.on_hovered(event.pos):
-                    play_scene("../data/katstsena1.mp4")
                     game("wolf")
                 if lynx_btn.on_hovered(event.pos):
-                    play_scene("../data/katstsena1.mp4")
                     game("lynx")
         mouse_pos = pygame.mouse.get_pos()
         for btn in buttons:
@@ -115,10 +124,13 @@ def choose_hero():
 
 
 # Функция запуска мини-игры
-def frame_generate(hero):
-    if hero == "lynx":
+def frame_generate(hero_):
+    if hero_ == "lynx":
         hero_image = load_image("lynx_avatar.png")
         hero_name = "Рыська"
+    elif hero_ == "bars":
+        hero_image = load_image("bars_avatar.png")
+        hero_name = "Ирбис"
     else:
         hero_image = load_image("wolf_avatar.png")
         hero_name = "Волчи"
@@ -143,6 +155,7 @@ def game(hero, lvl=1):
             cut_sheet(load_image("wolf_stay.png"), *stay_parameters),
             cut_sheet(load_image("walking_wolf.png"), *walk_parameters), (135, 100))
     paused = False
+    dialog = False
     buttons.empty()
     level = Level("tutorial")  # создаём объект уровня, передаём сложность
     level.render()
@@ -182,10 +195,6 @@ def game(hero, lvl=1):
             pygame.display.flip()
             clock.tick(FPS)
         else:
-            Border(5, 5, SCREEN_WIDTH - 5, 5)
-            Border(5, SCREEN_HEIGHT - 5, SCREEN_WIDTH - 5, SCREEN_HEIGHT - 5)
-            Border(5, 5, 5, SCREEN_HEIGHT - 5)
-            Border(SCREEN_WIDTH - 5, 5, SCREEN_WIDTH - 5, SCREEN_HEIGHT - 5)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
@@ -193,6 +202,8 @@ def game(hero, lvl=1):
                 if keys[pygame.K_ESCAPE] and not player.is_jump:
                     paused = True
                 player_group.update(event)
+            if objects_group.sprites()[-1].rect.colliderect(player):
+                dialog = True
             screen.fill(WHITE)  # Очищаем экран
             screen.blit(bg, (0, 0))  # Рисуем задний фон
             player_frame = frame_generate(hero)  # Генерируем рамку с данными игрока
@@ -203,16 +214,33 @@ def game(hero, lvl=1):
             player_group.update()  # Обновляем
             # death_count = player.deaths
             # Проверка на то, чем занят игрок
-            if player.occupation == 0:
-                player.idle()
-            if player.occupation == 1:
-                player.walk_right()
-                move(player, STEP)
-            if player.occupation == 2:
-                player.walk_left()
-                move(player, -STEP)
-            if player.is_jump:
-                player.jump()
+            if dialog:
+                dialog = DialogFrame(avatar_frame_image, dialog_frame_image, texts[0])
+                for i in range(len(texts[0])):
+                    dialog.dialog_generate(i)
+                    pygame.display.flip()
+                    clock.tick(FPS)
+            else:
+                if player.occupation == 0:
+                    player.idle()
+                if player.occupation == 1:
+                    if level.level_length >= abs(camera.dx) >= level.level_start:
+                        player.camera_stop = False
+                        player.walk_right()
+                        move(player, STEP)
+                    else:
+                        player.camera_stop = True
+                        player.walk_right()
+                if player.occupation == 2:
+                    if camera.dx < 0:
+                        player.camera_stop = False
+                        player.walk_left()
+                        move(player, -STEP)
+                    else:
+                        player.camera_stop = True
+                        player.walk_left()
+                if player.is_jump:
+                    player.jump()
             pygame.display.flip()
             clock.tick(FPS)
 
