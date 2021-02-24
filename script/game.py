@@ -4,17 +4,19 @@ from constants import *
 class Player(pygame.sprite.Sprite):
     # Передаём спрайт-лист с анимацией игрока, количество рядов и колонок на спрайт-листе
     # И отступ от края холста
-    def __init__(self, stay_frames, walk_frames, pos):
+    def __init__(self, stay_frames, walk_frames, pos, npc=False):
         super().__init__(player_group)
         self.is_jump = False  # Флаг прыжка
         self.camera_stop = False
+        self.npc = npc
         self.occupation = 0  # Переменная - отвечает за действия игрока
         # 0 - бездействие, 1 - ходьба вправо,
         # 2 - ходьба влево, 3 - прыжок.
         self.deaths = 0
         self.jump_power = JUMP_STRENGTH  # Сила прыжка в определенный момент времени
         self.stay_frames = stay_frames  # Список, с анимацией бездействия игрока
-        self.walk_frames = walk_frames  # Список, с анимацией ходьбы игрока
+        if walk_frames:
+            self.walk_frames = walk_frames  # Список, с анимацией ходьбы игрока
         self.current_frame = 0  # Текущий кадр - нулевой
         self.image = self.stay_frames[self.current_frame]
         self.rect = pygame.Rect(*pos, 184, 240)  # Получаем прямоугольную область игрока
@@ -77,26 +79,29 @@ class Player(pygame.sprite.Sprite):
 
     # Функция, обновляющая игрока (реализация анимации)
     def update(self, *args):
-        # pygame.draw.rect(screen, WHITE, self.rect, 1)
-        for platform in objects_group:
-            # pygame.draw.rect(screen, WHITE, platform.rect, 1)i
-            if pygame.sprite.spritecollideany(self, objects_group):
-                keys = pygame.key.get_pressed()
-                if args and keys:
-                    if keys[pygame.K_SPACE] and not self.is_jump:
-                        self.is_jump = True
-                    elif keys[pygame.K_LEFT]:
-                        if not pygame.sprite.collide_mask(self, platform):
-                            self.occupation = 2
-                    elif keys[pygame.K_RIGHT]:
-                        if not pygame.sprite.collide_mask(self, platform):
-                            self.occupation = 1
-                    else:
+        if self.npc:
+            self.idle()
+        else:
+            # pygame.draw.rect(screen, WHITE, self.rect, 1) - Хитбокс игрока
+            for platform in objects_group:
+                # pygame.draw.rect(screen, WHITE, platform.rect, 1) - Хитбокс платформ
+                if pygame.sprite.spritecollideany(self, objects_group):
+                    keys = pygame.key.get_pressed()
+                    if args and keys:
+                        if keys[pygame.K_SPACE] and not self.is_jump:
+                            self.is_jump = True
+                        elif keys[pygame.K_LEFT]:
+                            if not pygame.sprite.collide_mask(self, platform):
+                                self.occupation = 2
+                        elif keys[pygame.K_RIGHT]:
+                            if not pygame.sprite.collide_mask(self, platform):
+                                self.occupation = 1
+                        else:
+                            self.occupation = 0
+                else:
+                    if not self.is_jump:
                         self.occupation = 0
-            else:
-                if not self.is_jump:
-                    self.occupation = 0
-                    self.rect.y += (self.jump_power ** 2) // 2
+                        self.rect.y += (self.jump_power ** 2) // 2
 
 
 # Класс, описывающий платформу

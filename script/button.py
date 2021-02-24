@@ -59,11 +59,11 @@ class Button(pygame.sprite.Sprite):
 
     # Функция, выполняющаяся каждый цикл (высчитывает текущий кадр, накладывает текст)
     def update(self):
+        self.calculate_frame()
+        self.image = self.frames[self.current_frame // self.animation_fps]
         if self.text:
             set_text(self, self.text)
         if self.icon:
             self.set_icon()
-        self.calculate_frame()
         if self.hovered:
             pass
-        self.image = self.frames[self.current_frame // self.animation_fps]

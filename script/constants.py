@@ -108,7 +108,6 @@ GRAVITY = 0.8
 SCALE_COEFF = 1.2
 FONT_SIZE = 72
 DIFFICULTY = {"hard": 15, "medium": 12, "easy": 10, "tutorial": 8}
-hero = "wolf"
 all_sprites = pygame.sprite.Group()
 buttons = pygame.sprite.Group()
 font = pygame.font.Font("../data/fonts/thintel.ttf", FONT_SIZE)
@@ -122,8 +121,6 @@ death_count = 0
 pause_window, settings_window = load_image("window.png"), load_image("window.png")
 platform_image = load_image("mini.png")
 npc_platform_image = load_image("mini.png")
-avatar_frame_image = load_image("avatar_frame.png")
-dialog_frame_image = load_image("dialog_frame.png")
 dialog_total_frame = load_image("dialog_total_frame.png")
 choose_screen = load_image("choose_hero_window.png")
 i_s = cut_sheet(load_image("icons.png"), 5, 2, 74, 71)  # icon_sheet
@@ -131,9 +128,9 @@ i_s = cut_sheet(load_image("icons.png"), 5, 2, 74, 71)  # icon_sheet
 icons = {"settings": i_s[0], "pause": i_s[1], "reset": i_s[2], "star": i_s[3],
          "cross": i_s[4], "hp": i_s[5], "cup": i_s[6], "volume_down": i_s[7],
          "volume_up": i_s[8]}
-texts = [[{"wolf": "Привет, кто ты?"}, {"bars": "Привет, я Ирбис и это моя территория!"},
-         {"wolf": "Ох, извини, я не хотел тревожить тебя..."}, {"bars": "Ну что ж... Просто так я тебя не отпущу!"},
-         {"bars": "Придётся тебе поиграть со мной!"}]]
+texts = [[{"hero": "Привет, кто ты?"}, {"bars": "Привет, я Ирбис и это моя территория!"},
+         {"hero": "Ох, извини, я не хочу тревожить тебя..."}, {"bars": "Ну что ж... Просто так я тебя не отпущу!"},
+         {"bars": "Знаешь ли, в этих краях очень скучно"}, {"bars": "Придётся тебе поиграть со мной!"}]]
 bg_frames = cut_sheet(load_image("start_screen.png"), 2, 1, 1024, 683)
 long_button_frames = cut_sheet(load_image("buttons.png"), 1, 7, 256, 64)
 short_button_frames = cut_sheet(load_image("short_btn.png"), 3, 1, 96, 78)
@@ -143,5 +140,4 @@ control_window = load_image("control_window.png")
 info_screen = load_image("about_authors_screen.png")
 bg = load_image("bg.png")
 blured_bg = load_image("blured_bg.png")
-pygame.mixer.music.load("../data/sounds/bg.mp3")
 pygame.mixer.music.set_volume(0.2)

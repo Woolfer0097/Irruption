@@ -1,6 +1,5 @@
 from game import *
 from button import *
-from dialog import *
 from constants import *
 
 
@@ -11,7 +10,7 @@ def start_screen():
     settings_flag = False
     control_flag = False
     info_flag = False
-    buttons.empty()
+    pygame.mixer.music.load("../data/sounds/bg.mp3")
     pygame.mixer.music.play(-1)
     while True:
         if settings_flag:
@@ -23,12 +22,11 @@ def start_screen():
                 if event.type == pygame.QUIT:
                     terminate()
                 if event.type == pygame.MOUSEBUTTONUP:
+                    pygame.mixer.music.set_volume(volume)
                     if volume_off_btn.on_hovered(event.pos):
                         volume -= 0.05
-                        pygame.mixer.music.set_volume(volume)
                     if volume_on_btn.on_hovered(event.pos):
                         volume += 0.05
-                        pygame.mixer.music.set_volume(volume)
                     if control.on_hovered(event.pos):
                         control_flag = True
                 keys = pygame.key.get_pressed()
@@ -38,12 +36,7 @@ def start_screen():
                     else:
                         settings_flag = False
                         control_flag = False
-            mouse_pos = pygame.mouse.get_pos()
-            for btn in buttons:
-                if btn.on_hovered(mouse_pos):
-                    btn.highlight()
-                else:
-                    btn.set_default_image()
+            check_hovered()
             screen.blit(blured_bg, (0, 0))
             if control_flag:
                 screen.blit(control_window, (0, 0))
@@ -78,12 +71,7 @@ def start_screen():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         info_flag = False
-            mouse_pos = pygame.mouse.get_pos()
-            for btn in buttons:
-                if btn.on_hovered(mouse_pos):
-                    btn.highlight()
-                else:
-                    btn.set_default_image()
+            check_hovered()
             screen.blit(bg_frames[current_frame // ANIMATION_FPS], (0, 0))
             current_frame = calculate_frame(current_frame, bg_frames)
             buttons.draw(screen)
@@ -110,12 +98,7 @@ def choose_hero():
                     game("wolf")
                 if lynx_btn.on_hovered(event.pos):
                     game("lynx")
-        mouse_pos = pygame.mouse.get_pos()
-        for btn in buttons:
-            if btn.on_hovered(mouse_pos):
-                btn.highlight()
-            else:
-                btn.set_default_image()
+        check_hovered()
         screen.blit(choose_screen, (0, 0))
         buttons.draw(screen)
         buttons.update()
@@ -141,86 +124,139 @@ def frame_generate(hero_):
     return player_frame
 
 
-def game(hero, lvl=1):
+def check_hovered():
+    mouse_pos = pygame.mouse.get_pos()
+    for btn in buttons:
+        if btn.on_hovered(mouse_pos):
+            btn.highlight()
+        else:
+            btn.set_default_image()
+
+
+def dialog_frame_generate(hero_speaker, text):
+    if hero_speaker == "lynx":
+        hero_avatar = load_image("lynx_avatar.png")
+        hero_name = "Рыська"
+    elif hero_speaker == "bars":
+        hero_avatar = load_image("bars_avatar.png")
+        hero_name = "Ирбис"
+    else:
+        hero_avatar = load_image("wolf_avatar.png")
+        hero_name = "Волчи"
+    avatar_frame = load_image("avatar_frame.png")
+    dialog_frame = load_image("dialog_frame.png")
+    avatar_frame.blit(hero_avatar, (-6, -6))
+    font_text = pygame.font.Font("../data/fonts/thintel.ttf", 48)
+    text_result = font_text.render(f"{hero_name}: {text}", True, WHITE)
+    dialog_frame.blit(text_result, text_result.get_rect(center=dialog_frame.get_rect().center))
+    return [avatar_frame, dialog_frame]
+
+
+def game(hero, lvl=0):
     FPS = 60
+    dialog_count = 0
     stay_parameters = [5, 2, 256, 256]  # Параметры для создания спрайт-листа бездействия игрока
     walk_parameters = [2, 1, 256, 256]  # Параметры для создания спрайт-листа ходьбы игрока
+    level = Level("hard")  # создаём объект уровня, передаём сложность
+    level.render()
     # Установка игрока
     if hero == "lynx":
         player = Player(
             cut_sheet(load_image("lynx_stay.png"), *stay_parameters),
-            cut_sheet(load_image("walking_lynx.png"), *walk_parameters), (0, 1))
+            cut_sheet(load_image("walking_lynx.png"), *walk_parameters), (0, 0))
     else:
         player = Player(
             cut_sheet(load_image("wolf_stay.png"), *stay_parameters),
-            cut_sheet(load_image("walking_wolf.png"), *walk_parameters), (135, 100))
+            cut_sheet(load_image("walking_wolf.png"), *walk_parameters), (0, 0))
+    npc = Player(cut_sheet(load_image("bars_stay.png"), 3, 2, 256, 256),
+                 None, (350, 90), npc=True)
     paused = False
     dialog = False
+    control_flag = False
+    volume = 0.4
     buttons.empty()
-    level = Level("tutorial")  # создаём объект уровня, передаём сложность
-    level.render()
+    pygame.mixer.music.load("../data/sounds/bg.mp3")
+    pygame.mixer.music.play(-1)
     while True:
         if paused:
+            pygame.mixer.music.pause()
             buttons.empty()
             volume_on_btn = Button(short_light_button, 375, 471, icon=icons["volume_up"])
             volume_off_btn = Button(short_light_button, 567, 471, icon=icons["volume_down"])
-            exit_btn = Button(long_light_button, 362, 342, "Выход")
+            control = Button(long_light_button, 362, 314, "Управление")
+            exit_btn = Button(long_light_button, 362, 380, "Выход")
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
                 if event.type == pygame.MOUSEBUTTONUP:
+                    pygame.mixer.music.set_volume(volume)
                     if volume_off_btn.on_hovered(event.pos):
-                        transition()
+                        volume -= 0.05
                     if volume_on_btn.on_hovered(event.pos):
-                        transition()
+                        volume -= 0.05
                     if exit_btn.on_hovered(event.pos):
                         update_db()
                         transition()
                         start_screen()
+                    if control.on_hovered(event.pos):
+                        control_flag = True
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_ESCAPE]:
-                    paused = False
-            mouse_pos = pygame.mouse.get_pos()
-            for btn in buttons:
-                if btn.on_hovered(mouse_pos):
-                    btn.highlight()
-                else:
-                    btn.set_default_image()
+                    if control_flag:
+                        control_flag = False
+                    else:
+                        paused = False
+                        control_flag = False
+            check_hovered()
             screen.blit(blured_bg, (0, 0))
-            screen.blit(settings_window, (293, 43))
-            text = font.render("Пауза", True, WHITE)
-            screen.blit(text, (457, 189))
-            buttons.draw(screen)
-            buttons.update()
+            if control_flag:
+                screen.blit(control_window, (0, 0))
+            else:
+                screen.blit(settings_window, (293, 43))
+                text = font.render("Пауза", True, WHITE)
+                screen.blit(text, (457, 189))
+                buttons.draw(screen)
+                buttons.update()
             pygame.display.flip()
             clock.tick(FPS)
         else:
+            pygame.mixer.music.unpause()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_ESCAPE] and not player.is_jump:
                     paused = True
+                if keys[pygame.K_RETURN]:
+                    dialog_count += 1
                 player_group.update(event)
-            if objects_group.sprites()[-1].rect.colliderect(player):
+            if objects_group.sprites()[-1].rect.colliderect(player.rect):
                 dialog = True
             screen.fill(WHITE)  # Очищаем экран
             screen.blit(bg, (0, 0))  # Рисуем задний фон
-            player_frame = frame_generate(hero)  # Генерируем рамку с данными игрока
-            screen.blit(player_frame, (10, 10))  # Отрисовываем рамку
             objects_group.draw(screen)  # Рисуем все платформы из группы спрайтов
             objects_group.update()  # Обновляем
-            player_group.draw(screen)  # Отрисовываем игрока
-            player_group.update()  # Обновляем
+            screen.blit(player.image, (player.rect.x, player.rect.y))  # Отрисовываем игрока и NPC
+            player.update()  # Обновляем
             # death_count = player.deaths
             # Проверка на то, чем занят игрок
             if dialog:
-                dialog = DialogFrame(avatar_frame_image, dialog_frame_image, texts[0])
-                for i in range(len(texts[0])):
-                    dialog.dialog_generate(i)
-                    pygame.display.flip()
-                    clock.tick(FPS)
+                player.is_jump = False
+                dialog_text = texts[lvl]
+                if dialog_count >= len(dialog_text):
+                    game(hero)
+                for hero_speaker, text in dialog_text[dialog_count].items():
+                    if hero_speaker == "hero":
+                        avatar_frame, dialog_frame = dialog_frame_generate(hero, text)
+                    else:
+                        avatar_frame, dialog_frame = dialog_frame_generate(hero_speaker, text)
+                    screen.blit(avatar_frame, (74, 533))
+                    screen.blit(dialog_frame, (250, 533))
+                player_group.draw(screen)
+                npc.idle()
             else:
+                player_frame = frame_generate(hero)  # Генерируем рамку с данными игрока
+                screen.blit(player_frame, (10, 10))  # Отрисовываем рамку
                 if player.occupation == 0:
                     player.idle()
                 if player.occupation == 1:
@@ -232,7 +268,7 @@ def game(hero, lvl=1):
                         player.camera_stop = True
                         player.walk_right()
                 if player.occupation == 2:
-                    if camera.dx < 0:
+                    if camera.dx < level.level_start:
                         player.camera_stop = False
                         player.walk_left()
                         move(player, -STEP)
