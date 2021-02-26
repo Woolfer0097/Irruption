@@ -1,5 +1,6 @@
 from game import *
 from button import *
+from mini_game import *
 from constants import *
 
 
@@ -86,9 +87,9 @@ def start_screen():
 def choose_hero():
     buttons.empty()
     while True:
-        wolf_btn = Button([load_image("avatar_frame.png")], 99, 180)
+        wolf_btn = Button([load_image("avatar_frame.png")], 99, 180, only_hover=True)
         wolf_btn.image.blit(load_image("wolf_avatar.png"), (-6, -6))
-        lynx_btn = Button([load_image("avatar_frame.png")], 610, 180)
+        lynx_btn = Button([load_image("avatar_frame.png")], 610, 180, only_hover=True)
         lynx_btn.image.blit(load_image("lynx_avatar.png"), (-6, -6))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -152,12 +153,15 @@ def dialog_frame_generate(hero_speaker, text):
     return [avatar_frame, dialog_frame]
 
 
-def game(hero, lvl=0):
-    FPS = 60
+def game(hero, lvl=0, dialog_texts=None):
+    camera = Camera()
+    player_group.empty()
+    objects_group.empty()
+    borders.empty()
     dialog_count = 0
     stay_parameters = [5, 2, 256, 256]  # Параметры для создания спрайт-листа бездействия игрока
     walk_parameters = [2, 1, 256, 256]  # Параметры для создания спрайт-листа ходьбы игрока
-    level = Level("hard")  # создаём объект уровня, передаём сложность
+    level = Level(LEVELS[lvl])  # создаём объект уровня, передаём сложность
     level.render()
     # Установка игрока
     if hero == "lynx":
@@ -169,7 +173,7 @@ def game(hero, lvl=0):
             cut_sheet(load_image("wolf_stay.png"), *stay_parameters),
             cut_sheet(load_image("walking_wolf.png"), *walk_parameters), (0, 0))
     npc = Player(cut_sheet(load_image("bars_stay.png"), 3, 2, 256, 256),
-                 None, (350, 90), npc=True)
+                 None, (300, 90), npc=True)
     paused = False
     dialog = False
     control_flag = False
@@ -244,14 +248,14 @@ def game(hero, lvl=0):
                 player.is_jump = False
                 dialog_text = texts[lvl]
                 if dialog_count >= len(dialog_text):
+                    mini_game()
                     game(hero)
                 for hero_speaker, text in dialog_text[dialog_count].items():
                     if hero_speaker == "hero":
                         avatar_frame, dialog_frame = dialog_frame_generate(hero, text)
                     else:
                         avatar_frame, dialog_frame = dialog_frame_generate(hero_speaker, text)
-                    screen.blit(avatar_frame, (74, 533))
-                    screen.blit(dialog_frame, (250, 533))
+                    dialog_frame_draw(avatar_frame, dialog_frame)
                 player_group.draw(screen)
                 npc.idle()
             else:
@@ -263,7 +267,7 @@ def game(hero, lvl=0):
                     if level.level_length >= abs(camera.dx) >= level.level_start:
                         player.camera_stop = False
                         player.walk_right()
-                        move(player, STEP)
+                        move(camera, player, STEP)
                     else:
                         player.camera_stop = True
                         player.walk_right()
@@ -271,7 +275,7 @@ def game(hero, lvl=0):
                     if camera.dx < level.level_start:
                         player.camera_stop = False
                         player.walk_left()
-                        move(player, -STEP)
+                        move(camera, player, -STEP)
                     else:
                         player.camera_stop = True
                         player.walk_left()
@@ -281,11 +285,66 @@ def game(hero, lvl=0):
             clock.tick(FPS)
 
 
-camera = Camera()
-
-
-def move(player, x):
+def move(camera, player, x):
     camera.dx -= (x - player.x)
     player.x -= (x + player.x)
     for sprite in objects_group:
         camera.apply(sprite)
+
+
+def mini_game():
+    board = Board(3, 3, 293, 33)
+    dialog = None
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if not dialog:
+                    if board.step != 9:
+                        check = board.player_step(event.pos)
+                        if check:
+                            if board.step > 4:
+                                result = board.check_win()
+                                dialog = mini_game_result_analysis(result)
+                            board.ai_step()
+                        else:
+                            pass
+                    else:
+                        board.ai_step()
+                        result = board.check_win()
+                        dialog = mini_game_result_analysis(result)
+            if dialog:
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_RETURN]:
+                    return
+        screen.blit(blured_bg, (0, 0))
+        screen.blit(board.screen, (board.left, board.top))
+        board.render()
+        if dialog:
+            if dialog == "win":
+                avatar_frame, dialog_frame = dialog_frame_generate("bars", "Спасибо за игру! Увидимся!")
+                dialog_frame_draw(avatar_frame, dialog_frame)
+            elif dialog == "lose":
+                avatar_frame, dialog_frame = dialog_frame_generate("bars", "Ха-ха, сыграем ещё!")
+                dialog_frame_draw(avatar_frame, dialog_frame)
+            else:
+                avatar_frame, dialog_frame = dialog_frame_generate("bars", "Ничья..., ничего, сыграем ещё раз!")
+                dialog_frame_draw(avatar_frame, dialog_frame)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def mini_game_result_analysis(result):
+    if result:
+        if result == "X":
+            return "win"
+        elif result == "O":
+            return "lose"
+        else:
+            return "draw"
+
+
+def dialog_frame_draw(avatar_frame, dialog_frame):
+    screen.blit(avatar_frame, (74, 533))
+    screen.blit(dialog_frame, (250, 533))

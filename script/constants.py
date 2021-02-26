@@ -99,15 +99,17 @@ def update_db():  # name, hero, level, time_delta, deaths
 
 SCREEN_WIDTH, SCREEN_HEIGHT = SCREEN_SIZE = 1024, 683
 STEP = 5
+MAX_MOVE_COUNT = 9
 JUMP_STRENGTH = 10
-ANIMATION_FPS = 15
-FPS = 30
+ANIMATION_FPS = 20
+FPS = 60
 WHITE = pygame.Color("white")
 BLACK = pygame.Color("black")
 GRAVITY = 0.8
 SCALE_COEFF = 1.2
 FONT_SIZE = 72
 DIFFICULTY = {"hard": 15, "medium": 12, "easy": 10, "tutorial": 8}
+LEVELS = {0: "tutorial", 1: "easy", 2: "medium", 3: "hard"}
 all_sprites = pygame.sprite.Group()
 buttons = pygame.sprite.Group()
 font = pygame.font.Font("../data/fonts/thintel.ttf", FONT_SIZE)
@@ -117,10 +119,11 @@ pygame.display.set_caption("Irruption")
 player_group = pygame.sprite.Group()
 objects_group = pygame.sprite.Group()
 borders = pygame.sprite.Group()
+tic_tae_toe = pygame.sprite.Group()
 death_count = 0
 pause_window, settings_window = load_image("window.png"), load_image("window.png")
 platform_image = load_image("mini.png")
-npc_platform_image = load_image("mini.png")
+npc_platform_image = load_image("irbis_platform.png")
 dialog_total_frame = load_image("dialog_total_frame.png")
 choose_screen = load_image("choose_hero_window.png")
 i_s = cut_sheet(load_image("icons.png"), 5, 2, 74, 71)  # icon_sheet

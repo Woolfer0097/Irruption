@@ -3,8 +3,9 @@ from constants import *
 
 # Класс, описывающий кнопку
 class Button(pygame.sprite.Sprite):
-    def __init__(self, frames, x, y, text="", icon=pygame.Surface((0, 0))):
+    def __init__(self, frames, x, y, text="", icon=pygame.Surface((0, 0)), only_hover=False):
         super(Button, self).__init__(buttons)
+        self.only_hover = only_hover
         self.frames = frames
         self.icon = icon
         self.image = frames[0]
@@ -29,7 +30,8 @@ class Button(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.frames[self.current_frame // self.animation_fps],
                                             (int(self.width * SCALE_COEFF),
                                              int(self.height * SCALE_COEFF)))
-        self.rect = self.image.get_rect()
+        if not self.only_hover:
+            self.rect = self.image.get_rect()
         difference_width = (self.width - int(self.width * SCALE_COEFF)) // 2
         difference_height = (self.height - int(self.height * SCALE_COEFF)) // 2
         self.rect.x = self.x + difference_width
@@ -65,5 +67,3 @@ class Button(pygame.sprite.Sprite):
             set_text(self, self.text)
         if self.icon:
             self.set_icon()
-        if self.hovered:
-            pass

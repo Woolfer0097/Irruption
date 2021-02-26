@@ -144,14 +144,14 @@ class Level(object):
             x, y = platform
             Platform(platform_image, x, y)
         Platform(npc_platform_image,
-                 self.platform_width * self.difficulty + 200, 400)
+                 self.level_length + 450, 400)
 
     def generate_level(self):
-        self.level = [[random.randint(self.platform_width * i + 150,
-                                      self.platform_width * i + 160),
+        self.level = [[random.randint(self.platform_width * 1.5 * i,
+                                      self.platform_width * 1.5 * i + 100),
                        random.randint(SCREEN_HEIGHT - 300, SCREEN_HEIGHT - 186)]
                       for i in range(1, self.difficulty)]
-        self.level_length = self.platform_width * (self.difficulty - 1)
+        self.level_length = self.level[-1][0]
         self.level.insert(0, [0, 500])
 
 
