@@ -1,7 +1,4 @@
-from game import *
-from button import *
-from mini_game import *
-from input_box import *
+from game_classes import *
 from constants import *
 
 
@@ -12,10 +9,13 @@ def start_screen():
     settings_flag = False
     control_flag = False
     info_flag = False
+    saves = False
+    info_label = InfoLabel(save_screen_label, 106)
     pygame.mixer.music.load("../data/sounds/bg.mp3")
     pygame.mixer.music.play(-1)
     while True:
         if settings_flag:
+            # Настройки
             buttons.empty()
             volume_on_btn = Button(short_light_button, 375, 471, "", icons["volume_up"])
             volume_off_btn = Button(short_light_button, 567, 471, "", icons["volume_down"])
@@ -23,6 +23,7 @@ def start_screen():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
+                # Обработка нажатий на кнопки
                 if event.type == pygame.MOUSEBUTTONUP:
                     pygame.mixer.music.set_volume(volume)
                     if volume_off_btn.on_hovered(event.pos):
@@ -39,6 +40,7 @@ def start_screen():
                         settings_flag = False
                         control_flag = False
             check_hovered()
+            # Отрисовка нужных изображений
             screen.blit(blurred_bg, (0, 0))
             if control_flag:
                 screen.blit(control_window, (0, 0))
@@ -49,14 +51,40 @@ def start_screen():
                 screen.blit(text, (416, 189))
                 buttons.draw(screen)
                 buttons.update()
+            # Отрисовка
+            pygame.display.flip()
+            clock.tick(FPS)
+        elif saves:
+            buttons.empty()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 4:
+                        for sprite in info_labels:
+                            sprite.scroll_down()
+                    elif event.button == 5:
+                        for sprite in info_labels:
+                            print(sprite.dy, info_label.length)
+                            if sprite.dy < info_label.length:
+                                sprite.scroll_up()
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_ESCAPE]:
+                    saves = False
+            screen.blit(blurred_bg, (0, 0))
+            info_label.render()
+            screen.blit(saves_screen, (106, -31))
+            # Отрисовка
             pygame.display.flip()
             clock.tick(FPS)
         else:
+            # Начальный экран
             buttons.empty()
             start_btn = Button(long_button_frames, 384, 310, "Новая игра")
             info_btn = Button(long_button_frames, 384, 406, "Об авторах")
             exit_btn = Button(long_button_frames, 384, 502, "Выход")
             settings_btn = Button(short_button_frames, 910, 584, "", icons["settings"])
+            saves_btn = Button(short_button_frames, 917, 26, "", icons["cup"])
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
@@ -70,6 +98,8 @@ def start_screen():
                         terminate()
                     if settings_btn.on_hovered(event.pos):
                         settings_flag = True
+                    if saves_btn.on_hovered(event.pos):
+                        saves = True
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         info_flag = False
@@ -80,10 +110,12 @@ def start_screen():
             buttons.update()
             if info_flag:
                 screen.blit(info_screen, (0, 0))
+            # Отрисовка
             pygame.display.flip()
             clock.tick(FPS)
 
 
+# Функция ввода имени игрока
 def name_window(identifier):
     text = ""
     error_label_flag = False
@@ -111,6 +143,7 @@ def name_window(identifier):
         set_text(textbox, text, 120)
         if error_label_flag:
             error_label("unique_error")
+        # Отрисовка
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -135,10 +168,12 @@ def choose_hero():
         screen.blit(choose_screen, (0, 0))
         buttons.draw(screen)
         buttons.update()
+        # Отрисовка
         pygame.display.flip()
         clock.tick(FPS)
 
 
+# Отрисовка ошибок на экран
 def error_label(error):
     font_text = pygame.font.Font("../data/fonts/thintel.ttf", 92)
     text_result = font_text.render(error, True, WHITE)
@@ -220,6 +255,7 @@ def game(hero, lvl):
     buttons.empty()
     while True:
         if paused:
+            # Пауза
             pygame.mixer.music.pause()
             buttons.empty()
             volume_on_btn = Button(short_light_button, 375, 471, icon=icons["volume_up"])
@@ -259,6 +295,7 @@ def game(hero, lvl):
                 screen.blit(text, (457, 189))
                 buttons.draw(screen)
                 buttons.update()
+            # Отрисовка
             pygame.display.flip()
             clock.tick(FPS)
         else:
@@ -272,6 +309,9 @@ def game(hero, lvl):
                 if keys[pygame.K_RETURN]:
                     dialog_count += 1
                 player_group.update(event)
+            print(player.rect.y)
+            if player.rect.y > SCREEN_HEIGHT + 200:
+                game(hero, lvl)
             if objects_group.sprites()[-1].rect.colliderect(player.rect):
                 dialog = True
             screen.fill(WHITE)  # Очищаем экран
@@ -281,10 +321,12 @@ def game(hero, lvl):
             screen.blit(player.image, (player.rect.x, player.rect.y))  # Отрисовываем игрока и NPC
             player.update()  # Обновляем
             if dialog:
+                # Диалог
                 player.is_jump = False
                 dialog_text = dialog_texts[lvl]
                 if dialog_count >= len(dialog_text):
                     check_win()
+                print(dialog_text[dialog_count])
                 for hero_speaker, text in dialog_text[dialog_count].items():
                     if hero_speaker == "hero":
                         avatar_frame, dialog_frame = dialog_frame_generate(hero, text)
@@ -294,6 +336,7 @@ def game(hero, lvl):
                 player_group.draw(screen)
                 npc.idle()
             else:
+                # Игра
                 player_frame = frame_generate(hero)  # Генерируем рамку с данными игрока
                 screen.blit(player_frame, (10, 10))  # Отрисовываем рамку
                 if player.occupation == 0:
@@ -319,10 +362,12 @@ def game(hero, lvl):
             font_text = pygame.font.Font("../data/fonts/thintel.ttf", 72)
             text_result = font_text.render(str(lvl), True, WHITE)
             screen.blit(text_result, (989, 5))
+            # Отрисовка
             pygame.display.flip()
             clock.tick(FPS)
 
 
+# Движение камеры
 def move(camera, player, x):
     camera.dx -= (x - player.x)
     player.x -= (x + player.x)
@@ -330,6 +375,7 @@ def move(camera, player, x):
         camera.apply(sprite)
 
 
+# Функция запуска мини-игры "Крестики-Нолики"
 def mini_game():
     board = Board(3, 3, 293, 33)
     dialog = None
@@ -368,6 +414,7 @@ def mini_game():
         clock.tick(FPS)
 
 
+# Анализ результата проверки на победу в мини-игре
 def mini_game_result_analysis(result):
     if result:
         if result == "X":
@@ -378,6 +425,7 @@ def mini_game_result_analysis(result):
             return "draw"
 
 
+# Проверка на победу
 def check_win():
     result = mini_game()
     if result == "win":
@@ -386,6 +434,7 @@ def check_win():
         check_win()
 
 
+# Отрисовка рамки игрока
 def dialog_frame_draw(avatar_frame, dialog_frame):
     screen.blit(avatar_frame, (74, 533))
     screen.blit(dialog_frame, (250, 533))

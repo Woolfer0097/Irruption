@@ -55,6 +55,12 @@ def set_text(surface, text, font_size=72):
     screen.blit(text_result, text_result.get_rect(center=surface.rect.center))
 
 
+def get_info():
+    sql_request = "SELECT * FROM saves"
+    data = [list(j) for j in [i for i in cursor.execute(sql_request)]]
+    return data
+
+
 # Функция проигрывающая видео в окне, в моём случае видео - это кат-сцены
 def play_scene(filename):
     scene = VideoFileClip(filename)
@@ -114,7 +120,8 @@ ACCEPTED_SYMBOLS = "abcdefghijklmnopqrstuvwxyz" \
 SCREEN_WIDTH, SCREEN_HEIGHT = SCREEN_SIZE = 1024, 683  # Размеры экрана
 STEP = 5  # Количество пикселей на которое передвигается игрок при ходьбе
 MAX_MOVE_COUNT = 9  # Макс. кол-во ходов в мини-игре крестики-нолики
-MAX_TEXT_LENGTH = 12  # Макс. длина вводимого имени
+MAX_TEXT_LENGTH = 11  # Макс. длина вводимого имени
+PLATFORM_DIFFERENT = 75  # Расстояние между платформами в уровне
 JUMP_STRENGTH = 10  # Сила прыжка игрока
 ANIMATION_FPS = 25  # Кадры анимации в секунду
 FPS = 60  # Кадры в секунду (Frame Per Second)
@@ -133,6 +140,7 @@ player_group = pygame.sprite.Group()  # Группа спрайтов игрок
 objects_group = pygame.sprite.Group()  # Группа спрайтов платформ
 borders = pygame.sprite.Group()  # Группа спрайтов границ окна
 tic_tae_toe = pygame.sprite.Group()  # Группа спрайтов крестиков и ноликов
+info_labels = pygame.sprite.Group()  # Группа спрайтов информационных табличек
 screen = pygame.display.set_mode(SCREEN_SIZE)  # Объект экрана
 clock = pygame.time.Clock()  # Объект часов для отрисовки кадров
 pygame.display.set_caption("Irruption")  # Название окна
@@ -147,6 +155,8 @@ control_window = load_image("control_window.png")
 info_screen = load_image("about_authors_screen.png")
 bg = load_image("bg.png")
 blurred_bg = load_image("blured_bg.png")
+saves_screen = load_image("saves_screen.png")
+save_screen_label = load_image("save_screen_label.png")
 # Загрузка спрайт-листов:
 bg_frames = cut_sheet(load_image("start_screen.png"), 2, 1, 1024, 683)
 long_button_frames = cut_sheet(load_image("buttons.png"), 1, 7, 256, 64)
@@ -164,5 +174,12 @@ dialog_texts = [[{"hero": "Привет, кто ты?"},
                  {"hero": "Ох, извини, я не хочу тревожить тебя..."},
                  {"bars": "Ну что ж... Просто так я тебя не отпущу!"},
                  {"bars": "Знаешь ли, в этих краях очень скучно"},
-                 {"bars": "Придётся тебе поиграть со мной!"}]]
+                 {"bars": "Придётся тебе поиграть со мной!"}],
+                [{"hero": "Привет, кто ты?"},
+                 {"bars": "Привет, я Ирбис и это моя территория!"},
+                 {"hero": "Ох, извини, я не хочу тревожить тебя..."},
+                 {"bars": "Ну что ж... Просто так я тебя не отпущу!"},
+                 {"bars": "Знаешь ли, в этих краях очень скучно"},
+                 {"bars": "Придётся тебе поиграть со мной!"}]
+                ]
 pygame.mixer.music.set_volume(0.2)  # Устанавливаем громкость звука
