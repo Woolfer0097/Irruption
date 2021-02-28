@@ -137,9 +137,9 @@ def name_window(identifier):
                     if len(text) < MAX_TEXT_LENGTH:
                         if event.unicode in ACCEPTED_SYMBOLS:
                             text += event.unicode
-        textbox = TextBox(input_box, 212, 192)
+        textbox = TextBox(input_box, 184, 123)
         screen.blit(blurred_bg, (0, 0))
-        screen.blit(input_box, (212, 192))
+        screen.blit(input_box, (184, 83))
         set_text(textbox, text, 120)
         if error_label_flag:
             error_label("unique_error")
@@ -414,7 +414,7 @@ def dialog_frame_generate(hero_speaker, text):
     avatar_frame = load_image("avatar_frame.png")
     dialog_frame = load_image("dialog_frame.png")
     avatar_frame.blit(hero_avatar, (-6, -6))
-    font_text = pygame.font.Font("../data/fonts/thintel.ttf", 48)
+    font_text = pygame.font.Font("../data/fonts/thintel.ttf", 36)
     text_result = font_text.render(f"{hero_name}: {text}", True, WHITE)
     dialog_frame.blit(text_result, text_result.get_rect(center=dialog_frame.get_rect().center))
     return [avatar_frame, dialog_frame]

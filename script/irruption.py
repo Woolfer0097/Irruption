@@ -16,8 +16,12 @@ def main():
     for level in range(len(LEVELS)):
         update_db(identifier, hero, level)
         game(hero, level)
-        mini_game()
-        print(level)
+        if level != 3:
+            mini_game()
+        else:
+            play_scene("../data/video/cut-scene#2.mp4")
+            return
+    return
 
 
 if __name__ == '__main__':
