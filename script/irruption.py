@@ -16,9 +16,8 @@ def main():
     for level in range(len(LEVELS)):
         update_db(identifier, hero, level)
         game(hero, level)
-        result = mini_game()
-        if result != "win":
-            mini_game()
+        mini_game()
+        print(level)
 
 
 if __name__ == '__main__':

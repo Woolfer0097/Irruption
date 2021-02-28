@@ -62,11 +62,11 @@ def start_screen():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 4:
                         for sprite in info_labels:
-                            sprite.scroll_down()
+                            if sprite.dy < 0:
+                                sprite.scroll_down()
                     elif event.button == 5:
                         for sprite in info_labels:
-                            print(sprite.dy, info_label.length)
-                            if sprite.dy < info_label.length:
+                            if sprite.dy > info_label.length:
                                 sprite.scroll_up()
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_ESCAPE]:
@@ -80,7 +80,7 @@ def start_screen():
         else:
             # Начальный экран
             buttons.empty()
-            start_btn = Button(long_button_frames, 384, 310, "Новая игра")
+            start_btn = Button(long_button_frames, 384, 310, "Играть")
             info_btn = Button(long_button_frames, 384, 406, "Об авторах")
             exit_btn = Button(long_button_frames, 384, 502, "Выход")
             settings_btn = Button(short_button_frames, 910, 584, "", icons["settings"])
@@ -173,60 +173,7 @@ def choose_hero():
         clock.tick(FPS)
 
 
-# Отрисовка ошибок на экран
-def error_label(error):
-    font_text = pygame.font.Font("../data/fonts/thintel.ttf", 92)
-    text_result = font_text.render(error, True, WHITE)
-    screen.blit(text_result, (0, 0))
-
-
-# Функция запуска мини-игры
-def frame_generate(hero_):
-    if hero_ == "lynx":
-        hero_image = load_image("lynx_avatar.png")
-        hero_name = "Рыська"
-    elif hero_ == "bars":
-        hero_image = load_image("bars_avatar.png")
-        hero_name = "Ирбис"
-    else:
-        hero_image = load_image("wolf_avatar.png")
-        hero_name = "Волчи"
-    player_frame = load_image("player_frame.png")
-    player_frame.blit(hero_image, (0, 0))
-    font = pygame.font.Font("../data/fonts/thintel.ttf", 72)
-    text = font.render(hero_name, True, WHITE)
-    player_frame.blit(text, (200 - text.get_width() // 2, text.get_height() // 2))
-    return player_frame
-
-
-def check_hovered():
-    mouse_pos = pygame.mouse.get_pos()
-    for btn in buttons:
-        if btn.on_hovered(mouse_pos):
-            btn.highlight()
-        else:
-            btn.set_default_image()
-
-
-def dialog_frame_generate(hero_speaker, text):
-    if hero_speaker == "lynx":
-        hero_avatar = load_image("lynx_avatar.png")
-        hero_name = "Рыська"
-    elif hero_speaker == "bars":
-        hero_avatar = load_image("bars_avatar.png")
-        hero_name = "Ирбис"
-    else:
-        hero_avatar = load_image("wolf_avatar.png")
-        hero_name = "Волчи"
-    avatar_frame = load_image("avatar_frame.png")
-    dialog_frame = load_image("dialog_frame.png")
-    avatar_frame.blit(hero_avatar, (-6, -6))
-    font_text = pygame.font.Font("../data/fonts/thintel.ttf", 48)
-    text_result = font_text.render(f"{hero_name}: {text}", True, WHITE)
-    dialog_frame.blit(text_result, text_result.get_rect(center=dialog_frame.get_rect().center))
-    return [avatar_frame, dialog_frame]
-
-
+# Функция запуска игры
 def game(hero, lvl):
     camera = Camera()
     player_group.empty()
@@ -309,9 +256,10 @@ def game(hero, lvl):
                 if keys[pygame.K_RETURN]:
                     dialog_count += 1
                 player_group.update(event)
-            print(player.rect.y)
             if player.rect.y > SCREEN_HEIGHT + 200:
-                game(hero, lvl)
+                player.rect.y = 0
+                player.walk_left()
+                move(camera, player, -STEP)
             if objects_group.sprites()[-1].rect.colliderect(player.rect):
                 dialog = True
             screen.fill(WHITE)  # Очищаем экран
@@ -325,8 +273,7 @@ def game(hero, lvl):
                 player.is_jump = False
                 dialog_text = dialog_texts[lvl]
                 if dialog_count >= len(dialog_text):
-                    check_win()
-                print(dialog_text[dialog_count])
+                    return
                 for hero_speaker, text in dialog_text[dialog_count].items():
                     if hero_speaker == "hero":
                         avatar_frame, dialog_frame = dialog_frame_generate(hero, text)
@@ -367,14 +314,6 @@ def game(hero, lvl):
             clock.tick(FPS)
 
 
-# Движение камеры
-def move(camera, player, x):
-    camera.dx -= (x - player.x)
-    player.x -= (x + player.x)
-    for sprite in objects_group:
-        camera.apply(sprite)
-
-
 # Функция запуска мини-игры "Крестики-Нолики"
 def mini_game():
     board = Board(3, 3, 293, 33)
@@ -396,7 +335,7 @@ def mini_game():
             if dialog:
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_RETURN]:
-                    return dialog
+                    return
         screen.blit(blurred_bg, (0, 0))
         screen.blit(board.screen, (board.left, board.top))
         board.render()
@@ -405,10 +344,10 @@ def mini_game():
                 avatar_frame, dialog_frame = dialog_frame_generate("bars", "Спасибо за игру! Увидимся!")
                 dialog_frame_draw(avatar_frame, dialog_frame)
             elif dialog == "lose":
-                avatar_frame, dialog_frame = dialog_frame_generate("bars", "Ха-ха, сыграем ещё!")
+                avatar_frame, dialog_frame = dialog_frame_generate("bars", "Ха-ха, победишь в следующий раз!")
                 dialog_frame_draw(avatar_frame, dialog_frame)
             else:
-                avatar_frame, dialog_frame = dialog_frame_generate("bars", "Ничья..., ничего, сыграем ещё раз!")
+                avatar_frame, dialog_frame = dialog_frame_generate("bars", "Ничья..., ну ничего, ещё увидимся!")
                 dialog_frame_draw(avatar_frame, dialog_frame)
         pygame.display.flip()
         clock.tick(FPS)
@@ -425,16 +364,71 @@ def mini_game_result_analysis(result):
             return "draw"
 
 
-# Проверка на победу
-def check_win():
-    result = mini_game()
-    if result == "win":
-        pass
-    elif result == "lose" or result == "draw":
-        check_win()
+# Отрисовка ошибок на экран
+def error_label(error):
+    font_text = pygame.font.Font("../data/fonts/thintel.ttf", 92)
+    text_result = font_text.render(error, True, WHITE)
+    screen.blit(text_result, (0, 0))
+
+
+# Генерация рамки с игроком
+def frame_generate(hero_):
+    if hero_ == "lynx":
+        hero_image = load_image("lynx_avatar.png")
+        hero_name = "Рыська"
+    elif hero_ == "bars":
+        hero_image = load_image("bars_avatar.png")
+        hero_name = "Ирбис"
+    else:
+        hero_image = load_image("wolf_avatar.png")
+        hero_name = "Волчи"
+    player_frame = load_image("player_frame.png")
+    player_frame.blit(hero_image, (0, 0))
+    font = pygame.font.Font("../data/fonts/thintel.ttf", 72)
+    text = font.render(hero_name, True, WHITE)
+    player_frame.blit(text, (200 - text.get_width() // 2, text.get_height() // 2))
+    return player_frame
+
+
+# Проверка наведён ли курсор на кнопку
+def check_hovered():
+    mouse_pos = pygame.mouse.get_pos()
+    for btn in buttons:
+        if btn.on_hovered(mouse_pos):
+            btn.highlight()
+        else:
+            btn.set_default_image()
+
+
+# Генерация диалоговой рамки с игроком
+def dialog_frame_generate(hero_speaker, text):
+    if hero_speaker == "lynx":
+        hero_avatar = load_image("lynx_avatar.png")
+        hero_name = "Рыська"
+    elif hero_speaker == "bars":
+        hero_avatar = load_image("bars_avatar.png")
+        hero_name = "Ирбис"
+    else:
+        hero_avatar = load_image("wolf_avatar.png")
+        hero_name = "Волчи"
+    avatar_frame = load_image("avatar_frame.png")
+    dialog_frame = load_image("dialog_frame.png")
+    avatar_frame.blit(hero_avatar, (-6, -6))
+    font_text = pygame.font.Font("../data/fonts/thintel.ttf", 48)
+    text_result = font_text.render(f"{hero_name}: {text}", True, WHITE)
+    dialog_frame.blit(text_result, text_result.get_rect(center=dialog_frame.get_rect().center))
+    return [avatar_frame, dialog_frame]
 
 
 # Отрисовка рамки игрока
 def dialog_frame_draw(avatar_frame, dialog_frame):
     screen.blit(avatar_frame, (74, 533))
     screen.blit(dialog_frame, (250, 533))
+
+
+# Движение камеры
+def move(camera, player, x):
+    camera.dx -= (x - player.x)
+    player.x -= (x + player.x)
+    for sprite in objects_group:
+        camera.apply(sprite)

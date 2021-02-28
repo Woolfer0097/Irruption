@@ -170,7 +170,7 @@ class Camera:
         obj.rect.x = obj.abs_pos[0] + self.dx
 
     # позиционировать камеру на объекте target
-    def update(self, target):
+    def update(self):
         self.dx = 0
 
 
@@ -363,6 +363,7 @@ class InfoLabel(pygame.sprite.Sprite):
         self.name = ""
         self.hero = ""
         self.level = 0
+        self.height = self.image.get_height()
         self.rect = self.image.get_rect()
         self.dy = 0
         self.x = x
@@ -373,10 +374,10 @@ class InfoLabel(pygame.sprite.Sprite):
         self.rect.x = self.x
 
     def scroll_down(self):
-        self.dy += 20
+        self.dy += SCROLLING_SPEED
 
     def scroll_up(self):
-        self.dy -= 20
+        self.dy -= SCROLLING_SPEED
 
     def render(self):
         for i in range(len(self.data)):
@@ -395,6 +396,6 @@ class InfoLabel(pygame.sprite.Sprite):
             text = font_text.render(self.name, True, WHITE)
             self.image.blit(text, (120, 10))
             text = font_text.render(str(self.level), True, WHITE)
-            self.image.blit(text, (500, 10))
+            self.image.blit(text, (650, 10))
             screen.blit(self.image, (self.rect.x, ((self.image.get_height() + 20) * i + 100) + self.dy))
-        self.length = -((self.image.get_height() + 20) * len(self.data))
+        self.length = -(self.height * len(self.data)) + self.height * 3
