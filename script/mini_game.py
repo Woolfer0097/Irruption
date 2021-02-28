@@ -38,7 +38,6 @@ class Board(pygame.sprite.Sprite):
                 elif self.board[y][x] == "O":
                     x_figure, y_figure = self.cell_size * x + 33, 119 + self.cell_size * y
                     self.screen.blit(self.zero_image, (x_figure, y_figure))
-        print(self.board)
 
     def get_click(self, mouse_pos):
         cell = self.get_cell(mouse_pos)
@@ -52,30 +51,34 @@ class Board(pygame.sprite.Sprite):
         if self.width > cell_coordinates[0] >= 0 and self.height > cell_coordinates[1] >= 0:
             return cell_coordinates
         else:
-            return None
+            pass
 
     def player_step(self, cell_coords):
-        x, y = self.get_click(cell_coords)
-        for j in range(self.width):
-            for i in range(self.height):
-                if j == x and i == y:
-                    if self.board[i][j] != "X" and self.board[i][j] != "O":
-                        self.board[i][j] = "X"
-                        self.step += 1
-                        return True
-                    else:
-                        return False
+        coordinates = self.get_click(cell_coords)
+        if coordinates:
+            x, y = coordinates
+            for j in range(self.width):
+                for i in range(self.height):
+                    if j == x and i == y:
+                        if self.board[i][j] != "X" and self.board[i][j] != "O":
+                            self.board[i][j] = "X"
+                            self.step += 1
+                            return True
+                        else:
+                            return False
+        else:
+            pass
 
     def check_win(self):
         for x in range(self.width):
             for i, coord in enumerate(self.win_combinations):
-                x1, y1 = self.get_key(coord[0])
-                x2, y2 = self.get_key(coord[1])
-                x3, y3 = self.get_key(coord[2])
-                print((x1, y1), (x2, y2), (x3, y3))
-                if self.board[x1][y1] != " " and self.board[x2][y2] != " " and self.board[x3][y3] != " " and\
-                        self.board[x1][y1] == self.board[x2][y2] == self.board[x3][y3]:
+                y1, x1 = self.get_key(coord[0])
+                y2, x2 = self.get_key(coord[1])
+                y3, x3 = self.get_key(coord[2])
+                if self.board[x1][y1] == self.board[x2][y2] == self.board[x3][y3]:
                     return self.board[x1][y1]
+        if self.step == 9:
+            return "draw"
         return False
 
     def ai_step(self):  # artificial intellect`s step
@@ -84,8 +87,7 @@ class Board(pygame.sprite.Sprite):
             self.board[x][y] = "O"
             self.step += 1
         else:
-            if self.step != 9:
-                self.ai_step()
+            self.ai_step()
 
     def get_key(self, value_need):
         for key, value in self.coord_ratio.items():

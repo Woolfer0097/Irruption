@@ -1,6 +1,7 @@
 from game import *
 from button import *
 from mini_game import *
+from input_box import *
 from constants import *
 
 
@@ -38,11 +39,12 @@ def start_screen():
                         settings_flag = False
                         control_flag = False
             check_hovered()
-            screen.blit(blured_bg, (0, 0))
+            screen.blit(blurred_bg, (0, 0))
             if control_flag:
                 screen.blit(control_window, (0, 0))
             else:
                 screen.blit(settings_window, (293, 43))
+                font = pygame.font.Font("../data/fonts/thintel.ttf", 72)
                 text = font.render("Настройки", True, WHITE)
                 screen.blit(text, (416, 189))
                 buttons.draw(screen)
@@ -51,7 +53,7 @@ def start_screen():
             clock.tick(FPS)
         else:
             buttons.empty()
-            start_btn = Button(long_button_frames, 384, 310, "Играть")
+            start_btn = Button(long_button_frames, 384, 310, "Новая игра")
             info_btn = Button(long_button_frames, 384, 406, "Об авторах")
             exit_btn = Button(long_button_frames, 384, 502, "Выход")
             settings_btn = Button(short_button_frames, 910, 584, "", icons["settings"])
@@ -60,7 +62,6 @@ def start_screen():
                     terminate()
                 if event.type == pygame.MOUSEBUTTONUP:
                     if start_btn.on_hovered(event.pos):
-                        transition()
                         return
                     if info_btn.on_hovered(event.pos):
                         info_flag = True
@@ -83,28 +84,65 @@ def start_screen():
             clock.tick(FPS)
 
 
+def name_window(identifier):
+    text = ""
+    error_label_flag = False
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    error = create_account(identifier, text)
+                    if error == "unique_error":
+                        error_label_flag = True
+                    else:
+                        if text != "":
+                            return text
+                if event.key == pygame.K_BACKSPACE:
+                    text = text[:-1]
+                else:
+                    if len(text) < MAX_TEXT_LENGTH:
+                        if event.unicode in ACCEPTED_SYMBOLS:
+                            text += event.unicode
+        textbox = TextBox(input_box, 212, 192)
+        screen.blit(blurred_bg, (0, 0))
+        screen.blit(input_box, (212, 192))
+        set_text(textbox, text, 120)
+        if error_label_flag:
+            error_label("unique_error")
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
 # Функция запускающая экран выбора персонажей
 def choose_hero():
     buttons.empty()
     while True:
-        wolf_btn = Button([load_image("avatar_frame.png")], 99, 180, only_hover=True)
+        wolf_btn = Button([load_image("avatar_frame.png")], 99, 180)
         wolf_btn.image.blit(load_image("wolf_avatar.png"), (-6, -6))
-        lynx_btn = Button([load_image("avatar_frame.png")], 610, 180, only_hover=True)
+        lynx_btn = Button([load_image("avatar_frame.png")], 610, 180)
         lynx_btn.image.blit(load_image("lynx_avatar.png"), (-6, -6))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.MOUSEBUTTONUP:
                 if wolf_btn.on_hovered(event.pos):
-                    game("wolf")
+                    return "wolf"
                 if lynx_btn.on_hovered(event.pos):
-                    game("lynx")
+                    return "lynx"
         check_hovered()
         screen.blit(choose_screen, (0, 0))
         buttons.draw(screen)
         buttons.update()
         pygame.display.flip()
         clock.tick(FPS)
+
+
+def error_label(error):
+    font_text = pygame.font.Font("../data/fonts/thintel.ttf", 92)
+    text_result = font_text.render(error, True, WHITE)
+    screen.blit(text_result, (0, 0))
 
 
 # Функция запуска мини-игры
@@ -120,6 +158,7 @@ def frame_generate(hero_):
         hero_name = "Волчи"
     player_frame = load_image("player_frame.png")
     player_frame.blit(hero_image, (0, 0))
+    font = pygame.font.Font("../data/fonts/thintel.ttf", 72)
     text = font.render(hero_name, True, WHITE)
     player_frame.blit(text, (200 - text.get_width() // 2, text.get_height() // 2))
     return player_frame
@@ -153,7 +192,7 @@ def dialog_frame_generate(hero_speaker, text):
     return [avatar_frame, dialog_frame]
 
 
-def game(hero, lvl=0, dialog_texts=None):
+def game(hero, lvl):
     camera = Camera()
     player_group.empty()
     objects_group.empty()
@@ -179,8 +218,6 @@ def game(hero, lvl=0, dialog_texts=None):
     control_flag = False
     volume = 0.4
     buttons.empty()
-    pygame.mixer.music.load("../data/sounds/bg.mp3")
-    pygame.mixer.music.play(-1)
     while True:
         if paused:
             pygame.mixer.music.pause()
@@ -199,7 +236,7 @@ def game(hero, lvl=0, dialog_texts=None):
                     if volume_on_btn.on_hovered(event.pos):
                         volume -= 0.05
                     if exit_btn.on_hovered(event.pos):
-                        update_db()
+                        # update_db()
                         transition()
                         start_screen()
                     if control.on_hovered(event.pos):
@@ -212,11 +249,12 @@ def game(hero, lvl=0, dialog_texts=None):
                         paused = False
                         control_flag = False
             check_hovered()
-            screen.blit(blured_bg, (0, 0))
+            screen.blit(blurred_bg, (0, 0))
             if control_flag:
                 screen.blit(control_window, (0, 0))
             else:
                 screen.blit(settings_window, (293, 43))
+                font = pygame.font.Font("../data/fonts/thintel.ttf", 72)
                 text = font.render("Пауза", True, WHITE)
                 screen.blit(text, (457, 189))
                 buttons.draw(screen)
@@ -242,14 +280,11 @@ def game(hero, lvl=0, dialog_texts=None):
             objects_group.update()  # Обновляем
             screen.blit(player.image, (player.rect.x, player.rect.y))  # Отрисовываем игрока и NPC
             player.update()  # Обновляем
-            # death_count = player.deaths
-            # Проверка на то, чем занят игрок
             if dialog:
                 player.is_jump = False
-                dialog_text = texts[lvl]
+                dialog_text = dialog_texts[lvl]
                 if dialog_count >= len(dialog_text):
-                    mini_game()
-                    game(hero)
+                    check_win()
                 for hero_speaker, text in dialog_text[dialog_count].items():
                     if hero_speaker == "hero":
                         avatar_frame, dialog_frame = dialog_frame_generate(hero, text)
@@ -281,6 +316,9 @@ def game(hero, lvl=0, dialog_texts=None):
                         player.walk_left()
                 if player.is_jump:
                     player.jump()
+            font_text = pygame.font.Font("../data/fonts/thintel.ttf", 72)
+            text_result = font_text.render(str(lvl), True, WHITE)
+            screen.blit(text_result, (989, 5))
             pygame.display.flip()
             clock.tick(FPS)
 
@@ -301,24 +339,19 @@ def mini_game():
                 terminate()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if not dialog:
-                    if board.step != 9:
-                        check = board.player_step(event.pos)
-                        if check:
-                            if board.step > 4:
-                                result = board.check_win()
-                                dialog = mini_game_result_analysis(result)
+                    check = board.player_step(event.pos)
+                    if check:
+                        if board.step != 9:
                             board.ai_step()
-                        else:
-                            pass
-                    else:
-                        board.ai_step()
                         result = board.check_win()
                         dialog = mini_game_result_analysis(result)
+                    else:
+                        pass
             if dialog:
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_RETURN]:
-                    return
-        screen.blit(blured_bg, (0, 0))
+                    return dialog
+        screen.blit(blurred_bg, (0, 0))
         screen.blit(board.screen, (board.left, board.top))
         board.render()
         if dialog:
@@ -341,8 +374,16 @@ def mini_game_result_analysis(result):
             return "win"
         elif result == "O":
             return "lose"
-        else:
+        elif result == "draw":
             return "draw"
+
+
+def check_win():
+    result = mini_game()
+    if result == "win":
+        pass
+    elif result == "lose" or result == "draw":
+        check_win()
 
 
 def dialog_frame_draw(avatar_frame, dialog_frame):

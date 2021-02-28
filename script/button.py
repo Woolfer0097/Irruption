@@ -3,9 +3,8 @@ from constants import *
 
 # Класс, описывающий кнопку
 class Button(pygame.sprite.Sprite):
-    def __init__(self, frames, x, y, text="", icon=pygame.Surface((0, 0)), only_hover=False):
+    def __init__(self, frames, x, y, text="", icon=pygame.Surface((0, 0))):
         super(Button, self).__init__(buttons)
-        self.only_hover = only_hover
         self.frames = frames
         self.icon = icon
         self.image = frames[0]
@@ -28,12 +27,11 @@ class Button(pygame.sprite.Sprite):
     # Функция увеличивает кнопку (выделяет/подсвечивает)
     def highlight(self):
         self.image = pygame.transform.scale(self.frames[self.current_frame // self.animation_fps],
-                                            (int(self.width * SCALE_COEFF),
-                                             int(self.height * SCALE_COEFF)))
-        if not self.only_hover:
-            self.rect = self.image.get_rect()
-        difference_width = (self.width - int(self.width * SCALE_COEFF)) // 2
-        difference_height = (self.height - int(self.height * SCALE_COEFF)) // 2
+                                            (int(self.width * SCALE_COEFFICIENT),
+                                             int(self.height * SCALE_COEFFICIENT)))
+        self.rect = self.image.get_rect()
+        difference_width = (self.width - int(self.width * SCALE_COEFFICIENT)) // 2
+        difference_height = (self.height - int(self.height * SCALE_COEFFICIENT)) // 2
         self.rect.x = self.x + difference_width
         self.rect.y = self.y + difference_height
 
