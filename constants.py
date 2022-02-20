@@ -1,0 +1,236 @@
+# Библиотеки, константы для игры, глобальные функции и переменные
+
+
+import pygame  # Основная библиотека (Движок игры)
+import os  # Библиотека для работы с операционной системой
+import sys  # Библиотека для работы с файлами
+import random  # Библиотека для работы со случайными значениями
+import json  # Библиотека для работы с данными о сохранениях
+from moviepy.editor import *  # Библиотека для работы с видео
+
+
+# Функция выключения
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
+# Функция загрузки изображения
+def load_image(name, colorkey=None):
+    fullname = os.path.join('./data/images', name)
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+    if colorkey is not None:
+        image = image.convert()
+        if colorkey == -1:
+            colorkey = image.get_at((0, 0))
+        image.set_colorkey(colorkey)
+    else:
+        image = image.convert_alpha()
+    return image
+
+
+# Функция, вырезающая кадры со спрайт-листа
+def cut_sheet(sheet, columns, rows, obj_width, obj_height):
+    frames = []
+    rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                       sheet.get_height() // rows)
+    for j in range(rows):
+        for i in range(columns):
+            frame_location = (rect.w * i, rect.h * j)
+            image = pygame.transform.scale(sheet.subsurface(pygame.Rect(
+                frame_location, rect.size)), (obj_width, obj_height))
+            image = image.convert_alpha()
+            frames.append(image)
+    return frames
+
+
+# Функция устанавливающая надпись на кнопке
+def set_text(surface, text, font_size=72):
+    font_text = pygame.font.Font("./data/fonts/thintel.ttf", font_size)
+    text_result = font_text.render(text, True, WHITE)
+    screen.blit(text_result, text_result.get_rect(center=surface.rect.center))
+    return text_result.get_rect(center=surface.rect.center)
+
+
+# Функция проигрывающая видео в окне, в моём случае видео - это кат-сцены
+def play_scene(filename):
+    scene = VideoFileClip(filename)
+    scene.volumex(0.4)
+    scene.preview()
+    return
+
+
+# Функция высчитывающая кадр анимации объекта
+def calculate_frame(current_frame, frames):
+    current_frame += 1
+    if current_frame < len(frames) * ANIMATION_FPS:
+        pass
+    else:
+        current_frame = 0
+    return current_frame
+
+
+# Затухание экрана (Передаётся задержка)
+def transition(delay=15):
+    for size in range(40):
+        black_rect = pygame.Surface((1024, 20 * size))  # - переход сверху - вниз
+        black_rect.fill(BLACK)
+        screen.blit(black_rect, (black_rect.get_rect(center=screen.get_rect().center)))
+        pygame.display.flip()
+        pygame.time.delay(delay)
+
+
+def read_saves_data():
+    with open(SAVES_FILENAME, "r") as file_read:
+        data = json.load(file_read)
+    return data
+
+
+def write_saves_data(new_data):
+    with open(SAVES_FILENAME, "w") as file_write:
+        json.dump(new_data, file_write, indent=4)
+
+
+def get_name_list(data):
+    name_list = []
+    for user in data:
+        username = user["username"]
+        name_list.append(username)
+    return name_list
+    # return functools.reduce(lambda name_list, user: user["username"], data, [])
+
+
+def check_name(name):
+    data = read_saves_data()
+    name_list = get_name_list(data)
+    if name in name_list:
+        return "unique_error"
+
+
+# Функция создания нового профиля для сохранения прогресса
+def create_account(hero, name):
+    data = read_saves_data()
+    new_data = [*data,
+                {
+                    "hero": hero,
+                    "username": name,
+                    "level": 0
+                }]
+    write_saves_data(new_data)
+
+
+# Функция обновления базы данных (сохранение прогресса)
+def update_saves(hero, name, level=0):
+    data = read_saves_data()
+    for user in data:
+        if user["username"] == name:
+            user["hero"] = hero
+            user["username"] = name
+            user["level"] = level
+
+
+# Константы для игры:
+ACCEPTED_SYMBOLS = "abcdefghijklmnopqrstuvwxyz" \
+                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+                   "абвгдеёжзийклмнопрстуфхцчшщъыьэюя" \
+                   "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ" \
+                   "0123456789 _"  # Символы которые игрок может вписывать в поле ввода имени
+SCREEN_WIDTH, SCREEN_HEIGHT = SCREEN_SIZE = 1024, 683  # Размеры экрана
+STEP = 5  # Количество пикселей на которое передвигается игрок при ходьбе
+MAX_MOVE_COUNT = 9  # Макс. кол-во ходов в мини-игре крестики-нолики
+MAX_TEXT_LENGTH = 11  # Макс. длина вводимого имени
+PLATFORM_DIFFERENT = 100  # Расстояние между платформами в уровне
+SCROLLING_SPEED = 60
+JUMP_STRENGTH = 10  # Сила прыжка игрока
+ANIMATION_FPS = 25  # Кадры анимации в секунду
+FPS = 60  # Кадры в секунду (Frame Per Second)
+WHITE = pygame.Color("white")  # Белый цвет
+BLACK = pygame.Color("black")  # Чёрный цвет
+GRAVITY = 0.8  # Сила гравитации
+SCALE_COEFFICIENT = 1.2  # Коэффициент увеличения объектов (у меня кнопок)
+DIFFICULTY = {"hard": 15, "medium": 12, "easy": 10, "tutorial": 8}  # Соотношение сложности уровня
+# и кол-ва платформ на нём
+LEVELS = {0: "tutorial", 1: "easy", 2: "medium", 3: "hard"}  # Соотношение номера уровня и сложности на нём
+SAVES_FILENAME = "./data/saves.json"
+all_sprites = pygame.sprite.Group()  # Группа всех спрайтов
+buttons = pygame.sprite.Group()  # Группа спрайтов кнопок
+player_group = pygame.sprite.Group()  # Группа спрайтов игрока
+objects_group = pygame.sprite.Group()  # Группа спрайтов платформ
+borders = pygame.sprite.Group()  # Группа спрайтов границ окна
+tic_tae_toe = pygame.sprite.Group()  # Группа спрайтов крестиков и ноликов
+info_labels = pygame.sprite.Group()  # Группа спрайтов информационных табличек
+screen = pygame.display.set_mode(SCREEN_SIZE)  # Объект экрана
+clock = pygame.time.Clock()  # Объект часов для отрисовки кадров
+pygame.display.set_caption("Irruption")  # Название окна
+# Загрузка изображений:
+pause_window, settings_window = load_image("window.png"), load_image("window.png")
+platform_image = load_image("mini.png")
+npc_platform_image = load_image("irbis_platform.png")
+dialog_total_frame = load_image("dialog_total_frame.png")
+choose_screen = load_image("choose_hero_window.png")
+input_box = load_image("input_box.png")
+control_window = load_image("control_window.png")
+info_screen = load_image("about_authors_screen.png")
+error_label = load_image("error_label.png")
+bg = load_image("bg.png")
+blurred_bg = load_image("blured_bg.png")
+saves_screen = load_image("saves_screen.png")
+save_screen_label = "save_screen_label.png"
+# Загрузка спрайт-листов:
+bg_frames = cut_sheet(load_image("start_screen.png"), 2, 1, 1024, 683)
+long_button_frames = cut_sheet(load_image("buttons.png"), 1, 7, 256, 64)
+short_button_frames = cut_sheet(load_image("short_btn.png"), 3, 1, 96, 78)
+short_light_button = [load_image("short_light_button.png")]
+long_light_button = [load_image("long_light_button.png")]
+i_s = cut_sheet(load_image("icons.png"), 5, 2, 74, 71)  # icon_sheet
+# (i_s - сокращено для удобной записи в словаре)
+icons = {"settings": i_s[0], "pause": i_s[1], "reset": i_s[2], "star": i_s[3],
+         "cross": i_s[4], "hp": i_s[5], "cup": i_s[6], "volume_down": i_s[7],
+         "volume_up": i_s[8]}
+# Игровые диалоги
+dialog_texts = [[{"hero": "Привет, кто ты?"},
+                 {"bars": "Привет, я главнокомандующий Ирбис!"},
+                 {"hero": "Прошу прощения.."},
+                 {"hero": "Я не понимаю, как мне отсюда выбраться"},
+                 {"hero": "Что это за место?"},
+                 {"bars": "Это штаб животных."},
+                 {"hero": "Штаб кого?"},
+                 {"bars": "Да, ты всё правильно услышал"},
+                 {"bars": "Всё изменилось с тех пор, как люди загрязнили природу"},
+                 {"hero": "Но ведь люди всегда так делали"},
+                 {"bars": "Так оно и есть, но в этот раз они постарались на славу"},
+                 {"hero": "Ясно, а как.."},
+                 {"bars": "У меня мало времени."},
+                 {"bars": "Чтобы пройти дальше ты должен пройти испытание"},
+                 {"hero": "Я попробую..."}
+                 ],
+                [{"hero": "Ирбис, здравствуй!"},
+                 {"bars": "Привет, я тоже рад тебя видеть!"},
+                 {"bars": "Сложно было до меня добираться"},
+                 {"hero": "Да, но мне не составило большого труда дойти сюда"},
+                 {"bars": "Ну что ж... Хочешь идти дальше?"},
+                 {"hero": "Да, пожалуй."}
+                 ],
+                [{"hero": "Здравствуй!"},
+                 {"bars": "Привет, у нас тут назревает война!"},
+                 {"bars": "Было бы неплохо, если бы ты помог.."},
+                 {"hero": "Знаешь, а я не против, что нужно делать?"},
+                 {"bars": "Тебе нужно дойти до нашей базы в соседнем городе"},
+                 {"bars": "Справишься?"},
+                 {"hero": "Да, не сомневайся во мне!"}
+                 ],
+                [{"hero": "Здравствуй!"},
+                 {"bars": "А вот и ты, быстрее!"},
+                 {"bars": "Люди уже в полной боевой готовности!"},
+                 {"hero": "Что тут происходит?! Почему вообще вы воюете?"},
+                 {"bars": "На самом деле я против войны.."},
+                 {"bars": "Но это наш единственный выход!"},
+                 {"hero": "Почему? Конфликты всегда можно решить мирным путём"},
+                 {"bars": "Видимо не всегда......"}
+                 ]
+                ]
+pygame.mixer.init()
+pygame.mixer.music.set_volume(0.2)  # Устанавливаем громкость звука
